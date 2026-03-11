@@ -4,6 +4,9 @@
 __pycache__/
 
 instance/
+*.sqlite
+
+.env
 
 .pytest_cache/
 .coverage

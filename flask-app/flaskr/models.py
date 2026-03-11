@@ -12,7 +12,7 @@ class Subscriber(db.Model):
     age = db.Column(db.Integer, nullable=False)
     height = db.Column(db.Float, nullable=False)
     weight = db.Column(db.Float, nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     diary_id = db.Column(db.Integer, db.ForeignKey('food_diary.diary_id'), nullable=False)
 
     # TODO: Define Subscriber relationships

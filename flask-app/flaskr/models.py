@@ -1,6 +1,8 @@
 from flaskr import db
+from datetime import datetime
 
 class Subscriber(db.Model):
+    # Define Subscriber columns from db diagram
     subscriber_id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     name = db.Column(db.String(120), nullable=False)
@@ -11,4 +13,30 @@ class Subscriber(db.Model):
     height = db.Column(db.Float, nullable=False)
     weight = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False)
-    # diary_id = db.Column(db.Integer, db.ForeignKey('FoodDiary.diary_id'), nullable=False)
+    diary_id = db.Column(db.Integer, db.ForeignKey('food_diary.diary_id'), nullable=False)
+
+    # Define Subscriber relationships
+
+class FoodDiary(db.Model):
+    # Define FoodDiary columns from db diagram
+    diary_id = db.Column(db.Integer, primary_key=True)
+    create_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    # Define FoodDiary relationships
+
+class Meal(db.Model):
+    # Define Meal columns from db diagram
+    meal_id = db.Column(db.Integer, primary_key=True)
+    diary_id = db.Column(db.Integer, db.ForeignKey('food_diary.diary_id'), nullable=False)
+    meal_time = db.Column(db.DateTime, nullable=False)
+
+    # Define Meal relationships
+
+class MealItem(db.Model):
+    # Define MealItem columns from db diagram
+    meal_item_id = db.Column(db.Integer, primary_key=True)
+    meal_id = db.Column(db.Integer, db.ForeignKey('meal.meal_id'), nullable=False)
+    food_id = db.Column(db.String(120), db.ForeignKey('food.food_id'), nullable=False)
+    weight = db.Column(db.Integer, nullable=False)
+
+    # Define MealItem relationships

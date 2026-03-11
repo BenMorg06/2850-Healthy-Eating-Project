@@ -15,14 +15,14 @@ class Subscriber(db.Model):
     created_at = db.Column(db.DateTime, nullable=False)
     diary_id = db.Column(db.Integer, db.ForeignKey('food_diary.diary_id'), nullable=False)
 
-    # Define Subscriber relationships
+    # TODO: Define Subscriber relationships
 
 class FoodDiary(db.Model):
     # Define FoodDiary columns from db diagram
     diary_id = db.Column(db.Integer, primary_key=True)
     create_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
-    # Define FoodDiary relationships
+    # TODO: Define FoodDiary relationships
 
 class Meal(db.Model):
     # Define Meal columns from db diagram
@@ -30,7 +30,7 @@ class Meal(db.Model):
     diary_id = db.Column(db.Integer, db.ForeignKey('food_diary.diary_id'), nullable=False)
     meal_time = db.Column(db.DateTime, nullable=False)
 
-    # Define Meal relationships
+    # TODO: Define Meal relationships
 
 class MealItem(db.Model):
     # Define MealItem columns from db diagram
@@ -39,4 +39,33 @@ class MealItem(db.Model):
     food_id = db.Column(db.String(120), db.ForeignKey('food.food_id'), nullable=False)
     weight = db.Column(db.Integer, nullable=False)
 
-    # Define MealItem relationships
+    # TODO: Define MealItem relationships
+
+class Food(db.Model):
+    # Define Food columns from db diagram
+    # Import macros from MCance and Widdowson's CoFID
+    food_id = db.Column(db.String(120), primary_key=True)
+    food_name = db.Column(db.String(120), nullable=False)
+    kcal = db.Column(db.Float, nullable=False)
+    kj = db.Column(db.Float, nullable=False)
+    carbs = db.Column(db.Float, nullable=False)
+    protein = db.Column(db.Float, nullable=False)
+    fats = db.Column(db.Float, nullable=False)
+    sugar = db.Column(db.Float, nullable=False)
+    fibre = db.Column(db.Float, nullable=False)
+
+    # TODO: Define Food relationships
+
+# TODO: SavedMeal
+
+# TODO: Professional
+
+# TODO: Manages
+
+# TODO: Comment
+
+# TODO: Recipe
+
+# TODO: RecipeItem
+
+# TODO: FavouriteRecipe

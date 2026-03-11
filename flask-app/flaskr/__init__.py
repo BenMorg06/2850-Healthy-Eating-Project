@@ -24,6 +24,9 @@ def create_app(test_config=None):
     os.makedirs(app.instance_path, exist_ok=True)
 
     db.init_app(app)
+    with app.app_context():
+        from flaskr import models
+        db.create_all()
 
     # a simple page that says hello
     @app.route('/hello')

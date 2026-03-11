@@ -11,4 +11,4 @@ class Subscriber(db.Model):
     height = db.Column(db.Float, nullable=False)
     weight = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False)
-    diary_id = db.Column(db.Integer, db.ForeignKey('FoodDiary.diary_id'), nullable=False)
+    # diary_id = db.Column(db.Integer, db.ForeignKey('FoodDiary.diary_id'), nullable=False)

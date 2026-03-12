@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Healthy Dietary System</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">🍽</div>
+                <div>
+                    <h2>Healthy</h2>
+                    <p>Dietary System</p>
+                </div>
+            </div>
+
+            <div class="side-divider"></div>
+
+            <button class="side-btn active" data-page="dashboard">
+        <span>🏠</span><span>Dashboard</span>
+      </button>
+            <button class="side-btn" data-page="menu">
+        <span>📋</span><span>Menu</span>
+      </button>
+            <button class="side-btn" data-page="favourite">
+        <span>❤️</span><span>Favourite</span>
+      </button>
+            <button class="side-btn" data-page="professional">
+        <span>📊</span><span>Professional</span>
+      </button>
+            <button class="side-btn" data-page="diary">
+        <span>📔</span><span>Diary</span>
+      </button>
+        </aside>
+
+        <div class="main-area">
+            <main class="page-wrap">
+                <!-- DASHBOARD -->
+                <section class="page active" id="dashboard">
+                    <div class="page-heading dashboard-title-row">
+                        <h1>Dashboard</h1>
+                        <div class="top-icons">
+                            <div class="bell-wrap" id="userBellWrap">
+                                <button class="icon-btn" id="userBellBtn" type="button">🔔</button>
+                                <span id="userBellCount" class="bell-badge">0</span>
+                                <div id="userBellPanel" class="bell-panel hidden">
+                                    <div class="bell-header">Messages</div>
+                                    <div id="userBellList" class="bell-list"></div>
+                                </div>
+                            </div>
+
+                            <a href="auth.html" class="icon-btn profile-link">👤</a>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-fixed-grid">
+                        <div class="card intro-card">
+                            <div class="intro-top">
+                                <div class="intro-icon">🍴</div>
+                                <div>
+                                    <h3>Healthy Dietary</h3>
+                                    <p>Data-based healthy eating support</p>
+                                </div>
+                            </div>
+
+                            <ul class="intro-list">
+                                <li>Recommended foods with favourite support</li>
+                                <li>Quick add food records by grams</li>
+                                <li>Diary records generated from added foods</li>
+                                <li>Professional monitoring with note support</li>
+                            </ul>
+
+                            <h4>Weekly Energy Intake</h4>
+                            <div class="line-chart">
+                                <span style="left: 8%; top: 66%"></span>
+                                <span style="left: 20%; top: 60%"></span>
+                                <span style="left: 32%; top: 62%"></span>
+                                <span style="left: 44%; top: 50%"></span>
+                                <span style="left: 56%; top: 54%"></span>
+                                <span style="left: 68%; top: 40%"></span>
+                                <span style="left: 80%; top: 44%"></span>
+                                <span style="left: 92%; top: 36%"></span>
+                                <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <polyline points="8,66 20,60 32,62 44,50 56,54 68,40 80,44 92,36"></polyline>
+                </svg>
+                            </div>
+                        </div>
+
+                        <div class="card menu-preview-card">
+                            <div class="section-title-row">
+                                <h3>Recommended Foods</h3>
+                                <span class="tag red">Menu</span>
+                            </div>
+
+                            <div class="preview-grid">
+                                <div class="preview-box">
+                                    <p>Chicken Breast</p>
+                                </div>
+                                <div class="preview-box">
+                                    <p>Fruit Bowl</p>
+                                </div>
+                                <div class="preview-box">
+                                    <p>Yogurt Cup</p>
+                                </div>
+                                <div class="preview-box">
+                                    <p>Healthy Soup</p>
+                                </div>
+                                <div class="preview-box">
+                                    <p>Avocado Toast</p>
+                                </div>
+                                <div class="preview-box">
+                                    <p>Fresh Salad</p>
+                                </div>
+                            </div>
+
+                            <div class="feature-icons">
+                                <div><span>❤️</span>
+                                    <p>Favourite</p>
+                                </div>
+                                <div><span>➕</span>
+                                    <p>Quick Add</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card score-card">
+                            <div class="score-ring">
+                                <div class="ring-inner">
+                                    <strong>82%</strong>
+                                    <span>Healthy Score</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card stat-card">
+                            <div class="bar-stat">
+                                <div class="bar-fill" style="height: 78%"></div>
+                                <p>Protein</p>
+                                <small>78g</small>
+                            </div>
+                            <div class="bar-stat">
+                                <div class="bar-fill" style="height: 62%"></div>
+                                <p>Carbs</p>
+                                <small>164g</small>
+                            </div>
+                            <div class="bar-stat">
+                                <div class="bar-fill" style="height: 70%"></div>
+                                <p>Fat</p>
+                                <small>49g</small>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- MENU -->
+                <section class="page" id="menu">
+                    <div class="page-heading">
+                        <h1>Menu</h1>
+                    </div>
+
+                    <div class="menu-page-layout">
+                        <div class="card add-food-card">
+                            <h3>Manual Food Entry</h3>
+
+                            <div class="mode-switch">
+                                <button id="foodLookupTab" class="mode-btn active" type="button">Food Lookup</button>
+                                <button id="manualRecipeTab" class="mode-btn" type="button">Manual Recipe Entry</button>
+                            </div>
+
+                            <div id="foodLookupPanel" class="entry-panel active">
+                                <div class="form-grid single-column">
+                                    <div>
+                                        <label>Date</label>
+                                        <input id="foodDate" type="date" />
+                                    </div>
+                                    <div>
+                                        <label>Food Name</label>
+                                        <input id="foodName" type="text" placeholder="e.g. Chicken Breast" />
+                                    </div>
+                                    <div>
+                                        <label>Grams</label>
+                                        <input id="foodGrams" type="number" placeholder="e.g. 150" />
+                                    </div>
+                                </div>
+
+                                <p class="helper-text">
+                                    The system calculates calories and nutrition automatically from the food database.
+                                </p>
+
+                                <div class="action-row split">
+                                    <button id="checkFoodBtn" class="ghost-btn" type="button">Check Food</button>
+                                    <button id="addFoodBtn" class="tiny-blue big-btn" type="button">Add Record</button>
+                                </div>
+
+                                <div id="foodLookupResult" class="lookup-result"></div>
+                            </div>
+
+                            <div id="manualRecipePanel" class="entry-panel">
+                                <div class="form-grid">
+                                    <div>
+                                        <label>Date</label>
+                                        <input id="recipeDate" type="date" />
+                                    </div>
+                                    <div>
+                                        <label>Recipe Name</label>
+                                        <input id="recipeName" type="text" placeholder="e.g. Homemade Chicken Pasta" />
+                                    </div>
+                                    <div>
+                                        <label>Total Grams</label>
+                                        <input id="recipeGrams" type="number" placeholder="e.g. 350" />
+                                    </div>
+                                    <div>
+                                        <label>Category</label>
+                                        <input id="recipeCategory" type="text" placeholder="e.g. Manual Recipe" />
+                                    </div>
+                                    <div class="full-width">
+                                        <label>Ingredients / Recipe Notes</label>
+                                        <textarea id="recipeIngredients" placeholder="e.g. chicken breast, pasta, olive oil, broccoli..."></textarea>
+                                    </div>
+                                    <div>
+                                        <label>Calories</label>
+                                        <input id="recipeCalories" type="number" placeholder="e.g. 520" />
+                                    </div>
+                                    <div>
+                                        <label>Protein (g)</label>
+                                        <input id="recipeProtein" type="number" placeholder="e.g. 35" />
+                                    </div>
+                                    <div>
+                                        <label>Carbs (g)</label>
+                                        <input id="recipeCarbs" type="number" placeholder="e.g. 42" />
+                                    </div>
+                                    <div>
+                                        <label>Fat (g)</label>
+                                        <input id="recipeFat" type="number" placeholder="e.g. 18" />
+                                    </div>
+                                </div>
+
+                                <p class="helper-text">
+                                    Use this when the food is not found in the database.
+                                </p>
+
+                                <div class="action-row">
+                                    <button id="saveRecipeBtn" class="tiny-blue big-btn" type="button">Save Manual Recipe</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card recommended-card">
+                            <div class="section-title-row">
+                                <h3>Recommended Foods</h3>
+                                <span class="tag green">Quick Add Available</span>
+                            </div>
+                            <div id="recommendedGrid" class="menu-grid"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- FAVOURITE -->
+                <section class="page" id="favourite">
+                    <div class="page-heading">
+                        <h1>Favourite</h1>
+                    </div>
+
+                    <div class="card favourite-card">
+                        <div class="section-title-row">
+                            <h3>Favourite Foods</h3>
+                            <span class="tag red">Liked Items</span>
+                        </div>
+                        <div id="favouriteGrid" class="menu-grid"></div>
+                    </div>
+                </section>
+
+                <!-- PROFESSIONAL -->
+                <section class="page" id="professional">
+                    <div class="page-heading">
+                        <h1>Professional</h1>
+                    </div>
+
+                    <div class="professional-layout">
+                        <div class="card client-list-card">
+                            <h3>Client List</h3>
+                            <div id="clientList" class="client-list"></div>
+                        </div>
+
+                        <div class="pro-main">
+                            <div class="card pro-toolbar-card">
+                                <div class="pro-toolbar-top">
+                                    <div>
+                                        <h3 id="proClientName">Jessie Kim</h3>
+                                        <p id="proClientStatus" class="muted-line">Client daily dietary record overview</p>
+                                    </div>
+
+                                    <div class="pro-bell-wrap">
+                                        <button class="icon-btn" id="proBellBtn" type="button">🔔</button>
+                                        <span id="proBellCount" class="bell-badge">0</span>
+                                        <div id="proBellPanel" class="bell-panel hidden">
+                                            <div class="bell-header">Client Notes</div>
+                                            <div id="proBellList" class="bell-list"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="filter-row pro-filter-row">
+                                    <div>
+                                        <label>Date</label>
+                                        <input id="professionalDateFilter" type="date" />
+                                    </div>
+                                    <button id="todayProfessionalBtn" class="ghost-btn small-btn" type="button">Today</button>
+                                </div>
+                            </div>
+
+                            <div class="card pro-summary-card">
+                                <h3>Daily Nutrition Summary</h3>
+                                <div class="pro-summary-grid">
+                                    <div class="summary-box">
+                                        <strong id="clientCalories">0 kcal</strong>
+                                        <span>Calories</span>
+                                    </div>
+                                    <div class="summary-box">
+                                        <strong id="clientProtein">0 g</strong>
+                                        <span>Protein</span>
+                                    </div>
+                                    <div class="summary-box">
+                                        <strong id="clientCarbs">0 g</strong>
+                                        <span>Carbs</span>
+                                    </div>
+                                    <div class="summary-box">
+                                        <strong id="clientFat">0 g</strong>
+                                        <span>Fat</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pro-chart-row">
+                                <div class="card pro-chart-card">
+                                    <h3>Client Foods on Selected Date</h3>
+                                    <div id="professionalFoodList" class="professional-food-list"></div>
+                                </div>
+
+                                <div class="card pro-chart-card small-pro-card">
+                                    <h3>Macro Balance</h3>
+                                    <div class="mini-bars pro-mini-bars">
+                                        <div class="mini-bar">
+                                            <i id="proProteinBar" style="height: 30%"></i>
+                                            <p>Protein</p>
+                                            <small id="proProteinText">0g</small>
+                                        </div>
+                                        <div class="mini-bar">
+                                            <i id="proCarbsBar" style="height: 30%"></i>
+                                            <p>Carbs</p>
+                                            <small id="proCarbsText">0g</small>
+                                        </div>
+                                        <div class="mini-bar">
+                                            <i id="proFatBar" style="height: 30%"></i>
+                                            <p>Fat</p>
+                                            <small id="proFatText">0g</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card pro-note-card">
+                                <h3>Professional Note</h3>
+                                <textarea id="proNoteText" placeholder="Write a note for this client..."></textarea>
+                                <div class="action-row">
+                                    <button id="saveProNoteBtn" class="tiny-blue big-btn" type="button">Send Note</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- DIARY -->
+                <section class="page" id="diary">
+                    <div class="page-heading">
+                        <h1>Diary</h1>
+                    </div>
+
+                    <div class="card diary-editor">
+                        <div class="section-title-row">
+                            <h3>Daily Food Diary</h3>
+                            <div class="filter-row diary-filter-row">
+                                <div>
+                                    <label>Date</label>
+                                    <input id="diaryDateFilter" type="date" />
+                                </div>
+                                <button id="todayDiaryBtn" class="ghost-btn small-btn" type="button">Today</button>
+                            </div>
+                        </div>
+
+                        <div id="diarySummary" class="diary-summary"></div>
+                        <div id="diaryEntries" class="diary-entries"></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Quick add modal -->
+    <div id="quickAddModal" class="modal hidden">
+        <div class="modal-card">
+            <div class="section-title-row">
+                <h3 id="quickAddTitle">Quick Add</h3>
+                <button id="closeQuickAddModal" class="ghost-btn small-btn" type="button">Close</button>
+            </div>
+
+            <div class="form-grid single-column">
+                <div>
+                    <label>Date</label>
+                    <input id="quickAddDate" type="date" />
+                </div>
+                <div>
+                    <label>Grams</label>
+                    <input id="quickAddGrams" type="number" placeholder="e.g. 150" />
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button id="confirmQuickAddBtn" class="tiny-blue big-btn" type="button">Add to Diary</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

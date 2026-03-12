@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Login / Register - Healthy Dietary System</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="auth-body">
+    <div class="auth-wrapper">
+        <div class="auth-left">
+            <div class="auth-brand">
+                <div class="brand-mark large">🍽</div>
+                <h1>Healthy Dietary System</h1>
+                <p>Sign in to manage your dietary records, favourites, diary and professional support.</p>
+            </div>
+        </div>
+
+        <div class="auth-right">
+            <div class="auth-card">
+                <div class="auth-tab-row">
+                    <button id="loginTab" class="auth-tab active" type="button">Login</button>
+                    <button id="registerTab" class="auth-tab" type="button">Register</button>
+                </div>
+
+                <!-- LOGIN -->
+                <form id="loginForm" class="auth-form active" action="#" method="post">
+                    <h2>Login</h2>
+
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email" required />
+
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required />
+
+                    <button type="submit" class="auth-submit">Login</button>
+
+                    <div class="auth-bottom-link">
+                        <a href="index.html">Back to Home</a>
+                    </div>
+                </form>
+
+                <!-- REGISTER -->
+                <form id="registerForm" class="auth-form" action="#" method="post">
+                    <h2>Register</h2>
+
+                    <div class="auth-grid">
+                        <div>
+                            <label>Email</label>
+                            <input type="email" id="regEmail" placeholder="Enter your email" required />
+                        </div>
+
+                        <div>
+                            <label>Phone Number (Optional)</label>
+                            <input type="text" id="regPhone" placeholder="Enter phone number" />
+                        </div>
+
+                        <div>
+                            <label>Gender</label>
+                            <select id="regGender" required>
+                <option value="">Select gender</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+                <option>Prefer not to say</option>
+              </select>
+                        </div>
+
+                        <div>
+                            <label>Username</label>
+                            <input type="text" id="regUsername" placeholder="Enter username" required />
+                        </div>
+
+                        <div>
+                            <label>Password</label>
+                            <input type="password" id="regPassword" placeholder="Enter password" required />
+                        </div>
+
+                        <div>
+                            <label>Confirm Password</label>
+                            <input type="password" id="regConfirmPassword" placeholder="Confirm password" required />
+                        </div>
+
+                        <div class="full-width">
+                            <label>Weight (Optional)</label>
+                            <input type="number" id="regWeight" placeholder="Enter weight" />
+                        </div>
+                    </div>
+
+                    <button type="submit" class="auth-submit">Create Account</button>
+
+                    <div class="auth-bottom-link">
+                        <a href="index.html">Back to Home</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

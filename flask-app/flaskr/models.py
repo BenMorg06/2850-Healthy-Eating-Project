@@ -56,16 +56,93 @@ class Food(db.Model):
 
     # TODO: Define Food relationships
 
-# TODO: SavedMeal
+# SavedMeal
+class SavedMeal(db.Model):
+    # Define SavedMeal columns from db diagram
+    saved_meal_id = db.Column(db.Integer, primary_key=True)
+    subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
+    meal_name = db.Column(db.String(120), nullable=False)
+    meal_id = db.Column(db.Integer, db.ForeignKey('meal.meal_id'), nullable=False)
+    saved_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
-# TODO: Professional
+    # TODO: Define SavedMeal relationships
 
-# TODO: Manages
+#  Professional
+class Professional(db.Model):
+    # Define Professional columns from db diagram
+    professional_id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    name = db.Column(db.String(120), nullable=False)
+    address = db.Column(db.String(200), nullable=False)
+    pswd_hash = db.Column(db.String(128), nullable=False)
+    profession = db.Column(db.String(120), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
-# TODO: Comment
+    # TODO: Define Professional relationships
 
-# TODO: Recipe
+# Manages
+class Manages(db.Model):
+    # Define Manages columns from db diagram
+    manages_id = db.Column(db.Integer, primary_key=True)
+    professional_id = db.Column(db.Integer, db.ForeignKey('professional.professional_id'), nullable=False)
+    subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
+    start_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    end_date = db.Column(db.DateTime, nullable=True)
 
-# TODO: RecipeItem
+    # TODO: Define Manages relationships
 
-# TODO: FavouriteRecipe
+# Comment
+class Comment(db.Model):
+    # Define Comment columns from db diagram
+    comment_id = db.Column(db.Integer, primary_key=True)
+    meal_id = db.Column(db.Integer, db.ForeignKey('meal.meal_id'), nullable=False)
+    professional_id = db.Column(db.Integer, db.ForeignKey('professional.professional_id'), nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    # TODO: Define Comment relationships
+
+# Recipe
+class Recipe(db.Model):
+    # Define Recipe columns from db diagram
+    recipe_id = db.Column(db.Integer, primary_key=True)
+    recipe_name = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    num_of_servings = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    # Photo field can be added later
+    
+    # TODO: Define Recipe relationships
+
+# RecipeItem
+class RecipeItem(db.Model):
+    # Define RecipeItem columns from db diagram
+    recipe_item_id = db.Column(db.Integer, primary_key=True)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.recipe_id'), nullable=False)
+    food_id = db.Column(db.String(120), db.ForeignKey('food.food_id'), nullable=False)
+    weight = db.Column(db.Integer, nullable=False)
+
+    # TODO: Define RecipeItem relationships
+
+# FavouriteRecipe
+class FavouriteRecipe(db.Model):
+    # Define FavouriteRecipe columns from db diagram
+    favourite_recipe_id = db.Column(db.Integer, primary_key=True)
+    subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.recipe_id'), nullable=False)
+    saved_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    # TODO: Define FavouriteRecipe relationships
+
+# Recipe Rating
+class RecipeRating(db.Model):
+    # Define RecipeRating columns from db diagram
+    recipe_rating_id = db.Column(db.Integer, primary_key=True)
+    subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.recipe_id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.Text, nullable=True)
+    rated_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    # TODO: Define RecipeRating relationships

@@ -1,6 +1,9 @@
 from flaskr import db
 from datetime import datetime
 
+# TODO: Write tests for database
+# TODO: Add methods to models for CRUD ops
+
 class Subscriber(db.Model):
     # Define Subscriber columns from db diagram
     subscriber_id = db.Column(db.Integer, primary_key=True)
@@ -9,20 +12,26 @@ class Subscriber(db.Model):
     address = db.Column(db.String(200), nullable=False)
     pswd_hash = db.Column(db.String(128), nullable=False)
     sex = db.Column(db.String(10), nullable=False)
-    age = db.Column(db.Integer, nullable=False)
+    date_of_birth = db.Column(db.Date, nullable=False)
     height = db.Column(db.Float, nullable=False)
     weight = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    diary_id = db.Column(db.Integer, db.ForeignKey('food_diary.diary_id'), nullable=False)
+    diary_id = db.Column(db.Integer, db.ForeignKey('food_diary.diary_id'), nullable=True)
 
-    # TODO: Define Subscriber relationships
+    # Define Subscriber relationships
+    food_diary = db.relationship('FoodDiary', backref='subscriber')
+    saved_meals = db.relationship('SavedMeal', backref='subscriber')
+    favourite_recipes = db.relationship('FavouriteRecipe', backref='subscriber')
+    recipe_ratings = db.relationship('RecipeRating', backref='subscriber')
+    managed_by = db.relationship('Manages', backref='subscriber')
 
 class FoodDiary(db.Model):
     # Define FoodDiary columns from db diagram
     diary_id = db.Column(db.Integer, primary_key=True)
-    create_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
-    # TODO: Define FoodDiary relationships
+    # Define FoodDiary relationships
+    meals = db.relationship('Meal', backref='food_diary')
 
 class Meal(db.Model):
     # Define Meal columns from db diagram
@@ -30,7 +39,10 @@ class Meal(db.Model):
     diary_id = db.Column(db.Integer, db.ForeignKey('food_diary.diary_id'), nullable=False)
     meal_time = db.Column(db.DateTime, nullable=False)
 
-    # TODO: Define Meal relationships
+    # Define Meal relationships
+    items = db.relationship('MealItem', backref='meals')
+    comments = db.relationship('Comment', backref='meal')
+    saved_by = db.relationship('SavedMeal', backref='meal')
 
 class MealItem(db.Model):
     # Define MealItem columns from db diagram
@@ -38,8 +50,6 @@ class MealItem(db.Model):
     meal_id = db.Column(db.Integer, db.ForeignKey('meal.meal_id'), nullable=False)
     food_id = db.Column(db.String(120), db.ForeignKey('food.food_id'), nullable=False)
     weight = db.Column(db.Integer, nullable=False)
-
-    # TODO: Define MealItem relationships
 
 class Food(db.Model):
     # Define Food columns from db diagram
@@ -54,7 +64,10 @@ class Food(db.Model):
     sugar = db.Column(db.Float, nullable=False)
     fibre = db.Column(db.Float, nullable=False)
 
-    # TODO: Define Food relationships
+    # Define Food relationships
+    meal_items = db.relationship('MealItem', backref='food')
+    receipe_items = db.relationship('RecipeItem', backref='food')
+
 
 # SavedMeal
 class SavedMeal(db.Model):
@@ -64,8 +77,6 @@ class SavedMeal(db.Model):
     meal_name = db.Column(db.String(120), nullable=False)
     meal_id = db.Column(db.Integer, db.ForeignKey('meal.meal_id'), nullable=False)
     saved_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
-
-    # TODO: Define SavedMeal relationships
 
 #  Professional
 class Professional(db.Model):
@@ -78,7 +89,9 @@ class Professional(db.Model):
     profession = db.Column(db.String(120), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
-    # TODO: Define Professional relationships
+    # Define Professional relationships
+    comments = db.relationship('Comment', backref='professional')
+    manages = db.relationship('Manages', backref='professional')
 
 # Manages
 class Manages(db.Model):
@@ -88,8 +101,6 @@ class Manages(db.Model):
     subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
     start_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
     end_date = db.Column(db.DateTime, nullable=True)
-
-    # TODO: Define Manages relationships
 
 # Comment
 class Comment(db.Model):
@@ -101,8 +112,6 @@ class Comment(db.Model):
     body = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
-    # TODO: Define Comment relationships
-
 # Recipe
 class Recipe(db.Model):
     # Define Recipe columns from db diagram
@@ -113,7 +122,10 @@ class Recipe(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     # Photo field can be added later
     
-    # TODO: Define Recipe relationships
+    # Define Recipe relationships
+    items = db.relationship('RecipeItem', backref='recipe')
+    ratings = db.relationship('RecipeRating', backref='recipe')
+    favourited_by = db.relationship('FavouriteRecipe', backref='recipe')
 
 # RecipeItem
 class RecipeItem(db.Model):
@@ -123,8 +135,6 @@ class RecipeItem(db.Model):
     food_id = db.Column(db.String(120), db.ForeignKey('food.food_id'), nullable=False)
     weight = db.Column(db.Integer, nullable=False)
 
-    # TODO: Define RecipeItem relationships
-
 # FavouriteRecipe
 class FavouriteRecipe(db.Model):
     # Define FavouriteRecipe columns from db diagram
@@ -132,8 +142,6 @@ class FavouriteRecipe(db.Model):
     subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.recipe_id'), nullable=False)
     saved_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
-
-    # TODO: Define FavouriteRecipe relationships
 
 # Recipe Rating
 class RecipeRating(db.Model):
@@ -145,4 +153,3 @@ class RecipeRating(db.Model):
     comment = db.Column(db.Text, nullable=True)
     rated_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
-    # TODO: Define RecipeRating relationships

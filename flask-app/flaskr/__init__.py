@@ -23,10 +23,7 @@ def create_app(test_config=None):
     # ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
-    db.init_app(app)
-    with app.app_context():
-        from flaskr import models
-        db.create_all()
+    db = SQLAlchemy(app)
 
     # a simple page that says hello
     @app.route('/hello')

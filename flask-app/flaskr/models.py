@@ -66,7 +66,7 @@ class Food(db.Model):
 
     # Define Food relationships
     meal_items = db.relationship('MealItem', backref='food')
-    receipe_items = db.relationship('RecipeItem', backref='food')
+    recipe_items = db.relationship('RecipeItem', backref='food')
 
 
 # SavedMeal

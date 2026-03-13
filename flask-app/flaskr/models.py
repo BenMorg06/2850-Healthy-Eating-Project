@@ -152,4 +152,3 @@ class RecipeRating(db.Model):
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=True)
     rated_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
-

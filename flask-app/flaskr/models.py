@@ -4,6 +4,23 @@ from datetime import datetime
 # TODO: Write tests for database
 # TODO: Add methods to models for CRUD ops
 
+class FoodDiary(db.Model):
+    # Define FoodDiary columns from db diagram
+    diary_id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    # Define FoodDiary relationships
+    meals = db.relationship('Meal', backref='food_diary')
+
+    # CRUD methods for FoodDiary
+    @classmethod
+    def create_new_diary(cls, Subscriber):
+        new_diary = cls()
+        db.session.add(new_diary)
+        db.session.commit()
+        Subscriber.diary_id = new_diary.diary_id
+        db.session.commit()
+
 class Subscriber(db.Model):
     # Define Subscriber columns from db diagram
     subscriber_id = db.Column(db.Integer, primary_key=True)
@@ -27,8 +44,9 @@ class Subscriber(db.Model):
 
     # Subscriber CRUD methods
 
-    def create_new_subscriber(self, email, name, address, pswd_hash, sex, date_of_birth, height, weight):
-        new_subscriber = Subscriber(
+    @classmethod
+    def create_new_subscriber(cls, email, name, address, pswd_hash, sex, date_of_birth, height, weight):
+        new_subscriber = cls(
             email=email,
             name=name,
             address=address,
@@ -40,25 +58,20 @@ class Subscriber(db.Model):
         )
         db.session.add(new_subscriber)
         db.session.commit()
+        FoodDiary.create_new_diary(new_subscriber)  # Create a food diary for the new subscriber
 
     def delete_subscriber(self):
         db.session.delete(self)
         db.session.commit()
 
-    def get_by_email(self, email):
-        return Subscriber.query.filter_by(email=email).first()
+    @classmethod
+    def get_by_email(cls, email):
+        return cls.query.filter_by(email=email).first()
     
     def verify_password(self, password):
         # Implement password verification logic
         pass
 
-class FoodDiary(db.Model):
-    # Define FoodDiary columns from db diagram
-    diary_id = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
-
-    # Define FoodDiary relationships
-    meals = db.relationship('Meal', backref='food_diary')
 
 class Meal(db.Model):
     # Define Meal columns from db diagram

@@ -25,6 +25,33 @@ class Subscriber(db.Model):
     recipe_ratings = db.relationship('RecipeRating', backref='subscriber')
     managed_by = db.relationship('Manages', backref='subscriber')
 
+    # Subscriber CRUD methods
+
+    def create_new_subscriber(self, email, name, address, pswd_hash, sex, date_of_birth, height, weight):
+        new_subscriber = Subscriber(
+            email=email,
+            name=name,
+            address=address,
+            pswd_hash=pswd_hash,
+            sex=sex,
+            date_of_birth=date_of_birth,
+            height=height,
+            weight=weight
+        )
+        db.session.add(new_subscriber)
+        db.session.commit()
+
+    def delete_subscriber(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def get_by_email(self, email):
+        return Subscriber.query.filter_by(email=email).first()
+    
+    def verify_password(self, password):
+        # Implement password verification logic (e.g., using werkzeug.security)
+        pass
+
 class FoodDiary(db.Model):
     # Define FoodDiary columns from db diagram
     diary_id = db.Column(db.Integer, primary_key=True)

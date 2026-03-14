@@ -49,7 +49,7 @@ class Subscriber(db.Model):
         return Subscriber.query.filter_by(email=email).first()
     
     def verify_password(self, password):
-        # Implement password verification logic (e.g., using werkzeug.security)
+        # Implement password verification logic
         pass
 
 class FoodDiary(db.Model):
@@ -119,6 +119,29 @@ class Professional(db.Model):
     # Define Professional relationships
     comments = db.relationship('Comment', backref='professional')
     manages = db.relationship('Manages', backref='professional')
+
+    # CRUD methods for Professional
+    def create_new_professional(self, email, name, address, pswd_hash, profession):
+        new_professional = Professional(
+            email=email,
+            name=name,
+            address=address,
+            pswd_hash=pswd_hash,
+            profession=profession
+        )
+        db.session.add(new_professional)
+        db.session.commit()
+
+    def delete_professional(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def get_by_email(self, email):
+        return Professional.query.filter_by(email=email).first()
+    
+    def verify_password(self, password):
+        # Implement password verification logic
+        pass
 
 # Manages
 class Manages(db.Model):

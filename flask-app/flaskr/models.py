@@ -2,7 +2,6 @@ from flaskr import db
 from datetime import datetime
 
 # TODO: Write tests for database
-# TODO: Add methods to models for CRUD ops
 
 class FoodDiary(db.Model):
     # Define FoodDiary columns from db diagram

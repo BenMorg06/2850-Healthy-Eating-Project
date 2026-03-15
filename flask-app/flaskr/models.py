@@ -84,12 +84,56 @@ class Meal(db.Model):
     comments = db.relationship('Comment', backref='meal')
     saved_by = db.relationship('SavedMeal', backref='meal')
 
+    @classmethod
+    def create_new_meal(cls, diary_id, meal_time):
+        new_meal = cls(diary_id=diary_id, meal_time=meal_time)
+        db.session.add(new_meal)
+        db.session.commit()
+        return new_meal
+    
+    @classmethod
+    def get_by_id(cls, meal_id):
+        return cls.query.filter_by(meal_id=meal_id).all()
+    
+    @classmethod
+    def get_by_diary_id(cls, diary_id):
+        # Used to list all meals within a subscribers diary - for diary view page
+        return cls.query.filter_by(diary_id=diary_id).all()
+    
+    def update_meal_time(self, new_time):
+        self.meal_time = new_time
+        db.session.commit()
+
+    def delete_meal(self):
+        db.session.delete(self)
+        db.session.commit()
+
 class MealItem(db.Model):
     # Define MealItem columns from db diagram
     meal_item_id = db.Column(db.Integer, primary_key=True)
     meal_id = db.Column(db.Integer, db.ForeignKey('meal.meal_id'), nullable=False)
     food_id = db.Column(db.String(120), db.ForeignKey('food.food_id'), nullable=False)
     weight = db.Column(db.Integer, nullable=False)
+
+    @classmethod
+    def create_new_meal_item(cls, meal_id, food_id, weight):
+        new_meal_item = cls(meal_id=meal_id, food_id=food_id, weight=weight)
+        db.session.add(new_meal_item)
+        db.session.commit()
+        return new_meal_item
+    
+    @classmethod
+    def get_by_meal(cls, meal_id):
+        # Used to detail all the food items within a single meal, e.g. for a meal summary page
+        return cls.query.filter_by(meal_id=meal_id).all()
+    
+    def update_weight(self, new_weight):
+        self.weight = new_weight
+        db.session.commit()
+
+    def delete_meal_item(self):
+        db.session.delete(self)
+        db.session.commit()
 
 class Food(db.Model):
     # Define Food columns from db diagram
@@ -134,8 +178,9 @@ class Professional(db.Model):
     manages = db.relationship('Manages', backref='professional')
 
     # CRUD methods for Professional
-    def create_new_professional(self, email, name, address, pswd_hash, profession):
-        new_professional = Professional(
+    @classmethod
+    def create_new_professional(cls, email, name, address, pswd_hash, profession):
+        new_professional = cls(
             email=email,
             name=name,
             address=address,
@@ -174,6 +219,33 @@ class Comment(db.Model):
     title = db.Column(db.String(120), nullable=False)
     body = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    # CRUD for commenting on meals
+    @classmethod
+    def create_new_comment(cls, meal_id, professional_id, title, body):
+        new_comment = cls(
+            meal_id=meal_id,
+            professional_id=professional_id,
+            title=title,
+            body=body
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+        return new_comment
+    
+    @classmethod
+    def get_by_meal(cls, meal_id):
+        # Used to list all comments on a meal, e.g. for a meal summary page
+        return cls.query.filter_by(meal_id=meal_id).all()
+    
+    def update_comment(self, new_title, new_body):
+        self.title = new_title
+        self.body = new_body
+        db.session.commit()
+
+    def delete_comment(self):
+        db.session.delete(self)
+        db.session.commit()
 
 # Recipe
 class Recipe(db.Model):

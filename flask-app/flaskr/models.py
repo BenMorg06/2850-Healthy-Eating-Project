@@ -210,6 +210,27 @@ class Manages(db.Model):
     start_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
     end_date = db.Column(db.DateTime, nullable=True)
 
+    # CRUD for managing relationships between professionals and subscribers
+    @classmethod
+    def create_management_relationship(cls, professional_id, subscriber_id):
+        new_relationship = cls(professional_id=professional_id, subscriber_id=subscriber_id)
+        db.session.add(new_relationship)
+        db.session.commit()
+        return new_relationship
+    
+    @classmethod
+    def get_by_professional(cls, professional_id): 
+        # Used to list all subscribers managed by a professional, e.g. for a professional's dashboard
+        return cls.query.filter_by(professional_id=professional_id).all()
+    
+    def get_by_subscriber(cls, subscriber_id):
+        # Used to find the professional(s) managing a subscriber, e.g. for a subscriber's profile page
+        return cls.query.filter_by(subscriber_id=subscriber_id).all()
+    
+    def end_management(self):
+        self.end_date = datetime.now()
+        db.session.commit()
+
 # Comment
 class Comment(db.Model):
     # Define Comment columns from db diagram

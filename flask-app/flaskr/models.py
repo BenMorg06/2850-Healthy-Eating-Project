@@ -188,6 +188,7 @@ class Professional(db.Model):
         )
         db.session.add(new_professional)
         db.session.commit()
+        return new_professional
 
     def delete_professional(self):
         db.session.delete(self)

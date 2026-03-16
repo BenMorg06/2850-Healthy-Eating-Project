@@ -284,3 +284,27 @@ class TestSubscriber:
             diary_id = Subscriber.query.filter_by(email=self.good_subscriber[0]).first().diary_id
             diary = FoodDiary.query.filter_by(diary_id=diary_id).first()
             assert diary is not None
+
+# TODO: Add tests for professional
+class TestProfessional:
+    good_professional = (
+        'professional@test.com',
+        'John Doe',
+        '123 Main St',
+        '123-456-7890',
+        'nutritionist'
+    )
+
+    def test_create_professional(self, app):
+        with app.app_context():
+            from flaskr import db
+            from flaskr.models import Professional
+            new_professional = Professional.create_new_professional(*self.good_professional)
+            assert new_professional is not None
+            result = Professional.query.filter_by(email=self.good_professional[0]).first()
+            assert result is not None
+            assert result.name == self.good_professional[1]
+
+# TODO: Add tests for meal and food diary, including relationships
+
+# TODO: Add tests for manages relationship between professional and subscriber

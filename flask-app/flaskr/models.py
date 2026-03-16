@@ -194,9 +194,10 @@ class Professional(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-    def get_by_email(self, email):
-        return Professional.query.filter_by(email=email).first()
-    
+    @classmethod
+    def get_by_email(cls, email):
+        return cls.query.filter_by(email=email).first()
+
     def verify_password(self, password):
         # Implement password verification logic
         pass

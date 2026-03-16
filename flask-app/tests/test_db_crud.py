@@ -262,8 +262,7 @@ class TestSubscriber:
             from flaskr.models import Subscriber
             Subscriber.create_new_subscriber(*self.good_subscriber)
             subscriber = Subscriber.query.filter_by(email=self.good_subscriber[0]).first()
-            db.session.delete(subscriber)
-            db.session.commit()
+            Subscriber.delete_subscriber(subscriber)
             result = Subscriber.query.filter_by(email=self.good_subscriber[0]).first()
             assert result is None
 
@@ -286,6 +285,8 @@ class TestSubscriber:
             assert diary is not None
 
 # TODO: Add tests for professional
+# TODO: Add tests for manages relationship between professional and subscriber
+
 class TestProfessional:
     good_professional = (
         'professional@test.com',
@@ -293,6 +294,69 @@ class TestProfessional:
         '123 Main St',
         '123-456-7890',
         'nutritionist'
+    )
+    empty_email_professional = (
+        '',
+        'John Doe',
+        '123 Main St',
+        '123-456-7890',
+        'nutritionist'
+    )
+    invalid_email_professional = (
+        'invalid email',
+        'John Doe',
+        '123 Main St',
+        '123-456-7890',
+        'nutritionist'
+    )
+    empty_name_professional = (
+        'professional@test.com',
+        '',
+        '123 Main St',
+        '123-456-7890',
+        'nutritionist'
+    )
+    invalid_name_professional = (
+        'professional@test.com',
+        12313,
+        '123 Main St',
+        '123-456-7890',
+        'nutritionist'
+    )
+    empty_address_professional = (
+        'professional@test.com',
+        'John Doe',
+        '',
+        '123-456-7890',
+        'nutritionist'
+    )
+    invalid_address_professional = (
+        'professional@test.com',
+        'John Doe',
+        True,
+        '123-456-7890',
+        'nutritionist'
+    )
+    empty_password_professional = (
+        'professional@test.com',
+        'John Doe',
+        '123 Main St',
+        '',
+        'nutritionist'
+    )
+    empty_profession_professional = (
+        'professional@test.com',
+        'John Doe',
+        '123 Main St',
+        '123-456-7890',
+        ''
+    )
+    invalid_profession_professional = (
+        'professional@test.com',
+        'John Doe',
+        '123 Main St',
+        '123-456-7890',
+        12345
     )
 
     def test_create_professional(self, app):
@@ -305,6 +369,53 @@ class TestProfessional:
             assert result is not None
             assert result.name == self.good_professional[1]
 
+    @pytest.mark.parametrize("professional",
+        [
+            empty_email_professional,
+            invalid_email_professional,
+            empty_name_professional,
+            invalid_name_professional,
+            empty_address_professional,
+            invalid_address_professional,
+            empty_password_professional,
+            empty_profession_professional,
+            invalid_profession_professional
+        ]
+    )
+    def test_create_bad_professional(self, app, professional):
+        with app.app_context():
+            from flaskr import db
+            from flaskr.models import Professional
+            with pytest.raises(Exception):
+                Professional.create_new_professional(professional)
+
+    def test_get_professional_by_email(self, app):
+        with app.app_context():
+            from flaskr import db
+            from flaskr.models import Professional
+            Professional.create_new_professional(*self.good_professional)
+            result = Professional.query.filter_by(email=self.good_professional[0]).first()
+            assert result is not None
+            assert result.name == self.good_professional[1]
+
+    def test_get_professional_by_email_not_found(self, app):
+        with app.app_context():
+            from flaskr import db
+            from flaskr.models import Professional
+            Professional.create_new_professional(*self.good_professional)
+            result = Professional.query.filter_by(email='test@email.com').first()
+            assert result is None
+    
+    def test_delete_professional(self, app):
+        with app.app_context():
+            from flaskr import db
+            from flaskr.models import Professional
+            Professional.create_new_professional(*self.good_professional)
+            professional = Professional.query.filter_by(email=self.good_professional[0]).first()
+            Professional.delete_professional(professional)
+            result = Professional.query.filter_by(email=self.good_professional[0]).first()
+            assert result is None
+    
+
 # TODO: Add tests for meal and food diary, including relationships
 
-# TODO: Add tests for manages relationship between professional and subscriber

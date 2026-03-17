@@ -19,6 +19,7 @@ class FoodDiary(db.Model):
         db.session.commit()
         Subscriber.diary_id = new_diary.diary_id
         db.session.commit()
+        return new_diary
 
 class Subscriber(db.Model):
     # Define Subscriber columns from db diagram
@@ -58,6 +59,7 @@ class Subscriber(db.Model):
         db.session.add(new_subscriber)
         db.session.commit()
         FoodDiary.create_new_diary(new_subscriber)  # Create a food diary for the new subscriber
+        return new_subscriber
 
     def delete_subscriber(self):
         db.session.delete(self)
@@ -97,8 +99,11 @@ class Meal(db.Model):
     @classmethod
     def get_by_diary_id(cls, diary_id):
         # Used to list all meals within a subscribers diary - for diary view page
-        return cls.query.filter_by(diary_id=diary_id).all()
-    
+        meals = cls.query.filter_by(diary_id=diary_id).all()
+        diary = FoodDiary.query.filter_by(diary_id=diary_id).first()
+        if not diary:
+            raise ValueError("FoodDiary with the given diary_id does not exist.")
+        return meals
     def update_meal_time(self, new_time):
         self.meal_time = new_time
         db.session.commit()
@@ -224,6 +229,7 @@ class Manages(db.Model):
         # Used to list all subscribers managed by a professional, e.g. for a professional's dashboard
         return cls.query.filter_by(professional_id=professional_id).all()
     
+    @classmethod
     def get_by_subscriber(cls, subscriber_id):
         # Used to find the professional(s) managing a subscriber, e.g. for a subscriber's profile page
         return cls.query.filter_by(subscriber_id=subscriber_id).all()

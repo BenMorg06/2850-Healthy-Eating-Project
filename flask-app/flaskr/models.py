@@ -2,7 +2,24 @@ from flaskr import db
 from datetime import datetime
 
 # TODO: Write tests for database
-# TODO: Add methods to models for CRUD ops
+
+class FoodDiary(db.Model):
+    # Define FoodDiary columns from db diagram
+    diary_id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    # Define FoodDiary relationships
+    meals = db.relationship('Meal', backref='food_diary')
+
+    # CRUD methods for FoodDiary
+    @classmethod
+    def create_new_diary(cls, Subscriber):
+        new_diary = cls()
+        db.session.add(new_diary)
+        db.session.commit()
+        Subscriber.diary_id = new_diary.diary_id
+        db.session.commit()
+        return new_diary
 
 class Subscriber(db.Model):
     # Define Subscriber columns from db diagram
@@ -25,13 +42,37 @@ class Subscriber(db.Model):
     recipe_ratings = db.relationship('RecipeRating', backref='subscriber')
     managed_by = db.relationship('Manages', backref='subscriber')
 
-class FoodDiary(db.Model):
-    # Define FoodDiary columns from db diagram
-    diary_id = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    # Subscriber CRUD methods
 
-    # Define FoodDiary relationships
-    meals = db.relationship('Meal', backref='food_diary')
+    @classmethod
+    def create_new_subscriber(cls, email, name, address, pswd_hash, sex, date_of_birth, height, weight):
+        new_subscriber = cls(
+            email=email,
+            name=name,
+            address=address,
+            pswd_hash=pswd_hash,
+            sex=sex,
+            date_of_birth=date_of_birth,
+            height=height,
+            weight=weight
+        )
+        db.session.add(new_subscriber)
+        db.session.commit()
+        FoodDiary.create_new_diary(new_subscriber)  # Create a food diary for the new subscriber
+        return new_subscriber
+
+    def delete_subscriber(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    @classmethod
+    def get_by_email(cls, email):
+        return cls.query.filter_by(email=email).first()
+    
+    def verify_password(self, password):
+        # Implement password verification logic
+        pass
+
 
 class Meal(db.Model):
     # Define Meal columns from db diagram
@@ -44,12 +85,59 @@ class Meal(db.Model):
     comments = db.relationship('Comment', backref='meal')
     saved_by = db.relationship('SavedMeal', backref='meal')
 
+    @classmethod
+    def create_new_meal(cls, diary_id, meal_time):
+        new_meal = cls(diary_id=diary_id, meal_time=meal_time)
+        db.session.add(new_meal)
+        db.session.commit()
+        return new_meal
+    
+    @classmethod
+    def get_by_id(cls, meal_id):
+        return cls.query.filter_by(meal_id=meal_id).all()
+    
+    @classmethod
+    def get_by_diary_id(cls, diary_id):
+        # Used to list all meals within a subscribers diary - for diary view page
+        meals = cls.query.filter_by(diary_id=diary_id).all()
+        diary = FoodDiary.query.filter_by(diary_id=diary_id).first()
+        if not diary:
+            raise ValueError("FoodDiary with the given diary_id does not exist.")
+        return meals
+    def update_meal_time(self, new_time):
+        self.meal_time = new_time
+        db.session.commit()
+
+    def delete_meal(self):
+        db.session.delete(self)
+        db.session.commit()
+
 class MealItem(db.Model):
     # Define MealItem columns from db diagram
     meal_item_id = db.Column(db.Integer, primary_key=True)
     meal_id = db.Column(db.Integer, db.ForeignKey('meal.meal_id'), nullable=False)
     food_id = db.Column(db.String(120), db.ForeignKey('food.food_id'), nullable=False)
     weight = db.Column(db.Integer, nullable=False)
+
+    @classmethod
+    def create_new_meal_item(cls, meal_id, food_id, weight):
+        new_meal_item = cls(meal_id=meal_id, food_id=food_id, weight=weight)
+        db.session.add(new_meal_item)
+        db.session.commit()
+        return new_meal_item
+    
+    @classmethod
+    def get_by_meal(cls, meal_id):
+        # Used to detail all the food items within a single meal, e.g. for a meal summary page
+        return cls.query.filter_by(meal_id=meal_id).all()
+    
+    def update_weight(self, new_weight):
+        self.weight = new_weight
+        db.session.commit()
+
+    def delete_meal_item(self):
+        db.session.delete(self)
+        db.session.commit()
 
 class Food(db.Model):
     # Define Food columns from db diagram
@@ -93,6 +181,32 @@ class Professional(db.Model):
     comments = db.relationship('Comment', backref='professional')
     manages = db.relationship('Manages', backref='professional')
 
+    # CRUD methods for Professional
+    @classmethod
+    def create_new_professional(cls, email, name, address, pswd_hash, profession):
+        new_professional = cls(
+            email=email,
+            name=name,
+            address=address,
+            pswd_hash=pswd_hash,
+            profession=profession
+        )
+        db.session.add(new_professional)
+        db.session.commit()
+        return new_professional
+
+    def delete_professional(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    @classmethod
+    def get_by_email(cls, email):
+        return cls.query.filter_by(email=email).first()
+
+    def verify_password(self, password):
+        # Implement password verification logic
+        pass
+
 # Manages
 class Manages(db.Model):
     # Define Manages columns from db diagram
@@ -101,6 +215,28 @@ class Manages(db.Model):
     subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
     start_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
     end_date = db.Column(db.DateTime, nullable=True)
+
+    # CRUD for managing relationships between professionals and subscribers
+    @classmethod
+    def create_management_relationship(cls, professional_id, subscriber_id):
+        new_relationship = cls(professional_id=professional_id, subscriber_id=subscriber_id)
+        db.session.add(new_relationship)
+        db.session.commit()
+        return new_relationship
+    
+    @classmethod
+    def get_by_professional(cls, professional_id): 
+        # Used to list all subscribers managed by a professional, e.g. for a professional's dashboard
+        return cls.query.filter_by(professional_id=professional_id).all()
+    
+    @classmethod
+    def get_by_subscriber(cls, subscriber_id):
+        # Used to find the professional(s) managing a subscriber, e.g. for a subscriber's profile page
+        return cls.query.filter_by(subscriber_id=subscriber_id).all()
+    
+    def end_management(self):
+        self.end_date = datetime.now()
+        db.session.commit()
 
 # Comment
 class Comment(db.Model):
@@ -111,6 +247,33 @@ class Comment(db.Model):
     title = db.Column(db.String(120), nullable=False)
     body = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    # CRUD for commenting on meals
+    @classmethod
+    def create_new_comment(cls, meal_id, professional_id, title, body):
+        new_comment = cls(
+            meal_id=meal_id,
+            professional_id=professional_id,
+            title=title,
+            body=body
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+        return new_comment
+    
+    @classmethod
+    def get_by_meal(cls, meal_id):
+        # Used to list all comments on a meal, e.g. for a meal summary page
+        return cls.query.filter_by(meal_id=meal_id).all()
+    
+    def update_comment(self, new_title, new_body):
+        self.title = new_title
+        self.body = new_body
+        db.session.commit()
+
+    def delete_comment(self):
+        db.session.delete(self)
+        db.session.commit()
 
 # Recipe
 class Recipe(db.Model):

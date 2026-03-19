@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash
 from flaskr.extensions import db
-from flaskr.models import Food, MealItem, Subscriber, Meal
+from flaskr.models import Comment, Food, MealItem, Subscriber, Meal
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -106,5 +106,32 @@ def create_app(test_config=None):
         meal.delete_meal()
         db.session.commit()
         return redirect(url_for('diary'))
+    
+    @app.route('/meal/<int:meal_id>/view')
+    def view_meal(meal_id):
+        meal = Meal.query.get_or_404(meal_id)
+        items = MealItem.get_by_meal(meal_id)
+        comments = Comment.get_by_meal(meal_id)
+        
+        total_kcal    = round(sum((i.food.kcal     / 100) * i.weight for i in items), 1)
+        total_protein = round(sum((i.food.protein  / 100) * i.weight for i in items), 1)
+        total_carbs   = round(sum((i.food.carbs    / 100) * i.weight for i in items), 1)
+        total_fat     = round(sum((i.food.fats     / 100) * i.weight for i in items), 1)
+
+        daily_goal    = 2000
+        kcal_pct      = min(round((total_kcal / daily_goal) * 100), 100)
+
+        return render_template('meal_view.html',
+            active_page='diary',
+            meal=meal,
+            items=items,
+            comments=comments,
+            total_kcal=total_kcal,
+            total_protein=total_protein,
+            total_carbs=total_carbs,
+            total_fat=total_fat,
+            daily_goal=daily_goal,
+            kcal_pct=kcal_pct
+        )   
 
     return app

@@ -81,7 +81,7 @@ class Meal(db.Model):
     meal_time = db.Column(db.DateTime, nullable=False)
 
     # Define Meal relationships
-    items = db.relationship('MealItem', backref='meals')
+    items = db.relationship('MealItem', backref='meals', cascade='all, delete-orphan')
     comments = db.relationship('Comment', backref='meal')
     saved_by = db.relationship('SavedMeal', backref='meal')
 

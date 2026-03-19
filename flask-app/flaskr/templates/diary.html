@@ -6,6 +6,7 @@
 <section class="page active" id="diary">
     <div class="page-heading">
         <h1>Diary</h1>
+        <a href="{{ url_for('create_meal') }}" class="tiny-blue big-btn">+ Add Meal</a>
     </div>
 
     <div class="card diary-editor">
@@ -20,8 +21,52 @@
             </div>
         </div>
 
-        <div id="diarySummary" class="diary-summary"></div>
-        <div id="diaryEntries" class="diary-entries"></div>
+        {% if meals %}
+            <div class="diary-entries">
+                {% for meal in meals %}
+                <div class="card meal-entry">
+                    <div class="section-title-row">
+                        <h4>{{ meal.meal_time.strftime('%d %b %Y – %H:%M') }}</h4>
+                        <span class="tag red">{{ meal.items | length }} item(s)</span>
+                    </div>
+ 
+                    {% if meal.items %}
+                    <table class="meal-table">
+                        <thead>
+                            <tr>
+                                <th>Food</th>
+                                <th>Weight (g)</th>
+                                <th>Kcal</th>
+                                <th>Protein</th>
+                                <th>Carbs</th>
+                                <th>Fat</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in meal.items %}
+                            <tr>
+                                <td>{{ item.food.food_name }}</td>
+                                <td>{{ item.weight }}g</td>
+                                <td>{{ ((item.food.kcal / 100) * item.weight) | round(1) }}</td>
+                                <td>{{ ((item.food.protein / 100) * item.weight) | round(1) }}g</td>
+                                <td>{{ ((item.food.carbs / 100) * item.weight) | round(1) }}g</td>
+                                <td>{{ ((item.food.fats / 100) * item.weight) | round(1) }}g</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                        <p class="empty-hint">No items in this meal yet.</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+ 
+        {% else %}
+            <div class="diary-summary">
+                <p class="empty-hint">No meals logged yet. Click <strong>+ Add Meal</strong> to get started.</p>
+            </div>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

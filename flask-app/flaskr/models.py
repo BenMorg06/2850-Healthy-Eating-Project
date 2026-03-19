@@ -1,4 +1,4 @@
-from flaskr import db
+from flaskr.extensions import db
 from datetime import datetime
 
 # TODO: Write tests for database

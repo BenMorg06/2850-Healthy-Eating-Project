@@ -37,7 +37,7 @@ def create_app(test_config=None):
         
         subscriber = Subscriber.query.get(subscriber_id)
         meals = Meal.get_by_diary_id(subscriber.diary_id)
-        return render_template('diary.html')
+        return render_template('diary.html', active_page='diary', meals=meals)
     
     @app.route('/dashboard')
     def dashboard():
@@ -60,9 +60,17 @@ def create_app(test_config=None):
     @app.route('/meal/<int:meal_id>/search', methods=['GET'])
     def search_food(meal_id):
         query = request.args.get('q', '').strip()
+        results = []
         if query:
-            results = Food.query.filter(Food.name.ilike(f'%{query}%')).all()
-        return jsonify([food.to_dict() for food in results])
+            results = Food.query.filter(Food.food_name.like(f'%{query}%')).limit(10).all()
+        return jsonify([{
+            'food_id': f.food_id,
+            'food_name': f.food_name,
+            'kcal': f.kcal,
+            'protein': f.protein,
+            'carbs': f.carbs,
+            'fats': f.fats
+        } for f in results])
 
     @app.route('/meal/<int:meal_id>/add_item', methods=['POST'])
     def add_meal_item(meal_id):
@@ -86,6 +94,13 @@ def create_app(test_config=None):
     
     @app.route('/meal/<int:meal_id>/finish', methods=['POST'])
     def finish_meal(meal_id):
+        return redirect(url_for('diary'))
+    
+    @app.route('/meal/<int:meal_id>/cancel', methods=['POST'])
+    def cancel_meal(meal_id):
+        meal = Meal.query.get_or_404(meal_id)
+        meal.delete_meal()
+        db.session.commit()
         return redirect(url_for('diary'))
 
     return app

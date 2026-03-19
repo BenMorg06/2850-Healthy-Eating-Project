@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>{% block title %}Healthy Dietary System{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">🍽</div>
+                <div>
+                    <h2>Healthy</h2>
+                    <p>Dietary System</p>
+                </div>
+            </div>
+
+            <div class="side-divider"></div>
+
+            <button class="side-btn active" data-page="dashboard">
+                <span>🏠</span><span>Dashboard</span>
+            </button>
+            <button class="side-btn" data-page="menu">
+                <span>📋</span><span>Menu</span>
+            </button>
+            <button class="side-btn" data-page="favourite">
+                <span>❤️</span><span>Favourite</span>
+            </button>
+            <button class="side-btn" data-page="professional">
+                <span>📊</span><span>Professional</span>
+            </button>
+            <button class="side-btn" data-page="diary">
+                <span>📔</span><span>Diary</span>
+            </button>
+        </aside>
+
+        <div class="main-area">
+            <main class="page-wrap">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Quick add modal -->
+    <div id="quickAddModal" class="modal hidden">
+        <div class="modal-card">
+            <div class="section-title-row">
+                <h3 id="quickAddTitle">Quick Add</h3>
+                <button id="closeQuickAddModal" class="ghost-btn small-btn" type="button">Close</button>
+            </div>
+
+            <div class="form-grid single-column">
+                <div>
+                    <label>Date</label>
+                    <input id="quickAddDate" type="date" />
+                </div>
+                <div>
+                    <label>Grams</label>
+                    <input id="quickAddGrams" type="number" placeholder="e.g. 150" />
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button id="confirmQuickAddBtn" class="tiny-blue big-btn" type="button">Add to Diary</button>
+            </div>
+        </div>
+    </div>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

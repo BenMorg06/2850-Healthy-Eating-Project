@@ -25,8 +25,12 @@ def create_app(test_config=None):
         from flaskr import models
         db.create_all()
 
-    @app.route('/home')
+    @app.route('/')
     def home():
-        return render_template('index.html')
+        return render_template('base.html')
+    
+    @app.route('/diary')
+    def diary():
+        return render_template('diary.html')
 
     return app

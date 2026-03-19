@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Diary – Healthy Dietary System{% endblock %}
+
+{% block content %}
+<section class="page active" id="diary">
+    <div class="page-heading">
+        <h1>Diary</h1>
+    </div>
+
+    <div class="card diary-editor">
+        <div class="section-title-row">
+            <h3>Daily Food Diary</h3>
+            <div class="filter-row diary-filter-row">
+                <div>
+                    <label>Date</label>
+                    <input id="diaryDateFilter" type="date" />
+                </div>
+                <button id="todayDiaryBtn" class="ghost-btn small-btn" type="button">Today</button>
+            </div>
+        </div>
+
+        <div id="diarySummary" class="diary-summary"></div>
+        <div id="diaryEntries" class="diary-entries"></div>
+    </div>
+</section>
+{% endblock %}

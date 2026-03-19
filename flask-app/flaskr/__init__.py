@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-from flask import Flask, jsonify, render_template, request, session, redirect, url_for
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash
 from flaskr.extensions import db
 from flaskr.models import Food, MealItem, Subscriber, Meal
 
@@ -36,7 +36,10 @@ def create_app(test_config=None):
             return redirect(url_for('dashboard'))
         
         subscriber = Subscriber.query.get(subscriber_id)
-        meals = Meal.get_by_diary_id(subscriber.diary_id)
+        all_meals = Meal.query.filter_by(diary_id=subscriber.diary_id)\
+                .order_by(Meal.meal_time.desc())\
+                .all()
+        meals = [m for m in all_meals if len(m.items) > 0]
         return render_template('diary.html', active_page='diary', meals=meals)
     
     @app.route('/dashboard')
@@ -94,6 +97,7 @@ def create_app(test_config=None):
     
     @app.route('/meal/<int:meal_id>/finish', methods=['POST'])
     def finish_meal(meal_id):
+        flash ('Meal saved successfully!', 'success')
         return redirect(url_for('diary'))
     
     @app.route('/meal/<int:meal_id>/cancel', methods=['POST'])

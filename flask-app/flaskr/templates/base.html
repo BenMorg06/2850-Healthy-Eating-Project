@@ -20,18 +20,18 @@
 
             <div class="side-divider"></div>
 
-            <button class="side-btn active" data-page="dashboard">
+            <a href="{{ url_for('dashboard') }}" class="side-btn {% if active_page == 'dashboard' %}active{% endif %}">
                 <span>🏠</span><span>Dashboard</span>
-            </button>
+            </a>
             <button class="side-btn" data-page="menu">
                 <span>📋</span><span>Menu</span>
             </button>
             <button class="side-btn" data-page="favourite">
                 <span>❤️</span><span>Favourite</span>
             </button>
-            <button class="side-btn" data-page="professional">
-                <span>📊</span><span>Professional</span>
-            </button>
+            <a href="{{ url_for('diary') }}" class="side-btn {% if active_page == 'diary' %}active{% endif %}">
+                <span>📔</span><span>Diary</span>
+            </a>
             <button class="side-btn" data-page="diary">
                 <span>📔</span><span>Diary</span>
             </button>
@@ -43,32 +43,6 @@
             </main>
         </div>
     </div>
-
-    <!-- Quick add modal -->
-    <div id="quickAddModal" class="modal hidden">
-        <div class="modal-card">
-            <div class="section-title-row">
-                <h3 id="quickAddTitle">Quick Add</h3>
-                <button id="closeQuickAddModal" class="ghost-btn small-btn" type="button">Close</button>
-            </div>
-
-            <div class="form-grid single-column">
-                <div>
-                    <label>Date</label>
-                    <input id="quickAddDate" type="date" />
-                </div>
-                <div>
-                    <label>Grams</label>
-                    <input id="quickAddGrams" type="number" placeholder="e.g. 150" />
-                </div>
-            </div>
-
-            <div class="action-row">
-                <button id="confirmQuickAddBtn" class="tiny-blue big-btn" type="button">Add to Diary</button>
-            </div>
-        </div>
-    </div>
-
     {% block scripts %}{% endblock %}
 </body>
 

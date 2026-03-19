@@ -32,5 +32,9 @@ def create_app(test_config=None):
     @app.route('/diary')
     def diary():
         return render_template('diary.html')
+    
+    @app.route('/dashboard')
+    def dashboard():
+        return render_template('dashboard.html')
 
     return app

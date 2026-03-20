@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-from flask import Flask, jsonify, render_template, request, session, redirect, url_for, flash
+from flask import Flask, abort, jsonify, render_template, request, session, redirect, url_for, flash
 from flaskr.extensions import db
 from flaskr.models import Comment, Food, MealItem, Subscriber, Meal
 
@@ -35,8 +35,8 @@ def create_app(test_config=None):
         if not subscriber_id:
             return redirect(url_for('dashboard'))
         
-        subscriber = Subscriber.query.get(subscriber_id)
-        all_meals = Meal.query.filter_by(diary_id=subscriber.diary_id)\
+        subscriber = db.session.get(Subscriber, subscriber_id)
+        all_meals = db.session.query(Meal).filter_by(diary_id=subscriber.diary_id)\
                 .order_by(Meal.meal_time.desc())\
                 .all()
         meals = [m for m in all_meals if len(m.items) > 0]
@@ -49,14 +49,14 @@ def create_app(test_config=None):
     @app.route('/create_meal', methods=['GET'])
     def create_meal():
         subscriber_id = 1
-        subscriber = Subscriber.query.get(subscriber_id)
+        subscriber = db.session.get(Subscriber, subscriber_id)
 
         meal = Meal.create_new_meal(subscriber.diary_id, meal_time=datetime.now())
         return redirect(url_for('edit_meal', meal_id=meal.meal_id))
     
     @app.route('/meal/<int:meal_id>/edit')
     def edit_meal(meal_id):
-        meal = Meal.query.get_or_404(meal_id)
+        meal = db.session.get(Meal, meal_id) or abort(404)
         items = MealItem.get_by_meal(meal_id)
         return render_template('create_meal.html', active_page='diary', meal=meal, items=items)
     
@@ -102,7 +102,7 @@ def create_app(test_config=None):
     
     @app.route('/meal/<int:meal_id>/cancel', methods=['POST'])
     def cancel_meal(meal_id):
-        meal = Meal.query.get_or_404(meal_id)
+        meal = db.session.get(Meal,meal_id) or abort(404)
         meal.delete_meal()
         db.session.commit()
         return redirect(url_for('diary'))

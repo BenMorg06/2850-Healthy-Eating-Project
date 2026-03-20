@@ -1108,3 +1108,9 @@ label {
     border-left: 4px solid var(--accent);
     color: var(--accent);
 }
+
+.macro-bar-segment {
+    flex: var(--size);
+    height: 6px;
+    border-radius: 999px;
+}

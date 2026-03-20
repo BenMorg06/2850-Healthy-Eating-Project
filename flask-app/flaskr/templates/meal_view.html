@@ -77,9 +77,9 @@
                 <tr style="border-bottom: 2px solid #eef4ea;">
                     <td colspan="8" style="padding: 4px 10px 12px;">
                         <div style="display:flex; gap:6px; align-items:center;">
-                            <div style="flex:{{ protein }}; background:var(--green); height:6px; border-radius:999px;" title="Protein"></div>
-                            <div style="flex:{{ carbs }};   background:#e8d68c;      height:6px; border-radius:999px;" title="Carbs"></div>
-                            <div style="flex:{{ fat }};     background:var(--accent); height:6px; border-radius:999px;" title="Fat"></div>
+                            <div class="macro-bar-segment" style="--size: {{ protein }}; background: var(--green);" title="Protein"></div>
+                            <div class="macro-bar-segment" style="--size: {{ carbs }};   background: #e8d68c;"      title="Carbs"></div>
+                            <div class="macro-bar-segment" style="--size: {{ fat }};     background: var(--accent);" title="Fat"></div>
                         </div>
                         <div style="display:flex; gap:14px; margin-top:4px; font-size:11px; color:var(--muted);">
                             <span style="color:var(--green);">■ Protein</span>

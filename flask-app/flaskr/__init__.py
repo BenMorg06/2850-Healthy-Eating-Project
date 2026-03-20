@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+from rapidfuzz import process, fuzz
 from flask import Flask, abort, jsonify, render_template, request, session, redirect, url_for, flash
 from flaskr.extensions import db
 from flaskr.models import Comment, Food, MealItem, Subscriber, Meal
@@ -59,21 +60,51 @@ def create_app(test_config=None):
         meal = db.session.get(Meal, meal_id) or abort(404)
         items = MealItem.get_by_meal(meal_id)
         return render_template('create_meal.html', active_page='diary', meal=meal, items=items)
-    
+
     @app.route('/meal/<int:meal_id>/search', methods=['GET'])
     def search_food(meal_id):
-        query = request.args.get('q', '').strip()
-        results = []
-        if query:
-            results = Food.query.filter(Food.food_name.like(f'%{query}%')).limit(10).all()
+        query = request.args.get('q', '').strip().lower()
+        if not query:
+            return jsonify([])
+
+        all_foods = Food.query.all()
+        query_words = set(query.split())
+
+        scored = []
+        for food in all_foods:
+            name_lower = food.food_name.lower()
+            
+            # First word of the food name e.g. "Salmon" from "Salmon, smoked, hot-smoked"
+            first_word = name_lower.split(',')[0].split()[0]
+
+            base_score = max(
+                fuzz.WRatio(query, name_lower),
+                fuzz.token_sort_ratio(query, name_lower),
+                fuzz.token_set_ratio(query, name_lower)
+            )
+
+            # Strong boost if any query word matches the first word of the food name
+            first_word_boost = 40 if any(w == first_word for w in query_words) else 0
+
+            # Smaller boost if all query words appear anywhere in the name
+            word_matches = sum(1 for w in query_words if w in name_lower)
+            word_boost = (word_matches / len(query_words)) * 15
+
+            final_score = base_score + first_word_boost + word_boost
+            scored.append((food, final_score))
+
+        scored.sort(key=lambda x: x[1], reverse=True)
+        top = [(food, score) for food, score in scored if score >= 40][:10]
+
         return jsonify([{
-            'food_id': f.food_id,
-            'food_name': f.food_name,
-            'kcal': f.kcal,
-            'protein': f.protein,
-            'carbs': f.carbs,
-            'fats': f.fats
-        } for f in results])
+            'food_id':   food.food_id,
+            'food_name': food.food_name,
+            'kcal':      food.kcal,
+            'protein':   food.protein,
+            'carbs':     food.carbs,
+            'fats':      food.fats,
+            'score':     round(score, 1)
+        } for food, score in top])
 
     @app.route('/meal/<int:meal_id>/add_item', methods=['POST'])
     def add_meal_item(meal_id):

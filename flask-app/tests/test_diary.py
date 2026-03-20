@@ -81,3 +81,16 @@ def test_meal_view_loads(app, client, subscriber):
 
     response = client.get(f'/meal/{meal_id}/view')
     assert response.status_code == 200
+
+def test_search_food_returns_results(app, client):
+    with app.app_context():
+        food = Food(food_id = 'F001',food_name='Test Food', kcal=100, kj =100, carbs = 20, protein=10, fats=5, sugar=0, fibre=0)
+        db.session.add(food)
+        db.session.commit()
+        food_id = food.food_id
+
+    response = client.get('/meal/1/search?q=Test')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data) == 1
+    assert data[0]['food_id'] == food_id

@@ -94,3 +94,50 @@ def test_search_food_returns_results(app, client):
     data = response.get_json()
     assert len(data) == 1
     assert data[0]['food_id'] == food_id
+
+def test_add_meal_item(app, client, subscriber):
+    with app.app_context():
+        s = db.session.get(Subscriber, subscriber)
+        meal = Meal.create_new_meal(s.diary_id, datetime.now())
+        meal_id = meal.meal_id
+        food = Food(food_id = 'F002',food_name='Another Food', kcal=150, kj =150, carbs = 30, protein=15, fats=10, sugar=0, fibre=0)
+        db.session.add(food)
+        db.session.commit()
+        food_id = food.food_id
+
+    response = client.post(f'/meal/{meal_id}/add_item', data={'food_id': food_id, 'weight': 100})
+    assert response.status_code == 302
+
+    with app.app_context():
+        items = MealItem.get_by_meal(meal_id)
+        assert len(items) == 1
+        assert items[0].food_id == food_id
+
+def test_remove_meal_item(app, client, subscriber):
+    with app.app_context():
+        s = db.session.get(Subscriber, subscriber)
+        meal = Meal.create_new_meal(s.diary_id, datetime.now())
+        meal_id = meal.meal_id
+        food = Food(food_id = 'F003',food_name='Food To Remove', kcal=200, kj =200, carbs = 40, protein=20, fats=15, sugar=0, fibre=0)
+        db.session.add(food)
+        db.session.commit()
+        food_id = food.food_id
+        item = MealItem.create_new_meal_item(meal_id, food_id, 100)
+        item_id = item.meal_item_id
+
+    response = client.post(f'/meal/{meal_id}/remove_item/{item_id}')
+    assert response.status_code == 302
+
+    with app.app_context():
+        items = MealItem.get_by_meal(meal_id)
+        assert len(items) == 0  # item was removed
+
+def test_search_food_no_results(app, client):
+    response = client.get('/meal/1/search?q=NonExistentFood')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data) == 0
+
+def test_cancel_nonexistent_meal(app, client):
+    response = client.post('/meal/999/cancel')
+    assert response.status_code == 404

@@ -87,7 +87,7 @@ def create_app(test_config=None):
     
     @app.route('/meal/<int:meal_id>/remove_item/<int:item_id>', methods=['POST'])
     def remove_meal_item(meal_id, item_id):
-        meal_item = MealItem.query.get_or_404(item_id)
+        meal_item = db.session.get(MealItem, item_id) or abort(404)
         if meal_item.meal_id != meal_id:
             return jsonify({'error': 'Item does not belong to this meal'}), 400
 

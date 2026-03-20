@@ -72,3 +72,12 @@ def test_finish_meal_flashes_message(app, client, subscriber):
 
     response = client.post(f'/meal/{meal_id}/finish')
     assert response.status_code == 302
+
+def test_meal_view_loads(app, client, subscriber):
+    with app.app_context():
+        s = db.session.get(Subscriber, subscriber)
+        meal = Meal.create_new_meal(s.diary_id, datetime.now())
+        meal_id = meal.meal_id
+
+    response = client.get(f'/meal/{meal_id}/view')
+    assert response.status_code == 200

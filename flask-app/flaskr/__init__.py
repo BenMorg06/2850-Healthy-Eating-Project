@@ -109,7 +109,7 @@ def create_app(test_config=None):
     
     @app.route('/meal/<int:meal_id>/view')
     def view_meal(meal_id):
-        meal = Meal.query.get_or_404(meal_id)
+        meal = db.session.get(Meal, meal_id) or abort(404)
         items = MealItem.get_by_meal(meal_id)
         comments = Comment.get_by_meal(meal_id)
         

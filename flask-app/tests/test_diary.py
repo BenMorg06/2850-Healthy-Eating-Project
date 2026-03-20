@@ -60,3 +60,15 @@ def test_cancel_meal_deletes_it(app, client, subscriber):
 
     with app.app_context():
         assert db.session.get(Meal, meal_id) is None  # meal was deleted
+
+def test_finish_meal_flashes_message(app, client, subscriber):
+    with app.app_context():
+        s = db.session.get(Subscriber, subscriber)
+        meal = Meal.create_new_meal(s.diary_id, datetime.now())
+        meal_id = meal.meal_id
+
+    with client.session_transaction() as session:
+        session['_flashes'] = []  # clear flashes
+
+    response = client.post(f'/meal/{meal_id}/finish')
+    assert response.status_code == 302

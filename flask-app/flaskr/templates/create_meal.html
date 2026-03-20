@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Add Meal – Healthy Dietary System{% endblock %}
+
+{% block content %}
+<section class="page active" id="create-meal">
+
+    <div class="page-heading">
+        <h1>Add Meal</h1>
+        <form method="POST" action="{{ url_for('cancel_meal', meal_id=meal.meal_id) }}">
+        <button class="ghost-btn small-btn" type="submit">← Cancel</button>
+    </form>
+    </div>
+
+    <!-- Running nutrition totals -->
+    <div class="diary-summary" id="nutritionTotals">
+        <div class="diary-summary-box">
+            <strong id="totalKcal">0</strong>
+            <span>kcal</span>
+        </div>
+        <div class="diary-summary-box">
+            <strong id="totalProtein">0g</strong>
+            <span>Protein</span>
+        </div>
+        <div class="diary-summary-box">
+            <strong id="totalCarbs">0g</strong>
+            <span>Carbs</span>
+        </div>
+        <div class="diary-summary-box">
+            <strong id="totalFat">0g</strong>
+            <span>Fat</span>
+        </div>
+    </div>
+
+    <!-- Food search -->
+    <div class="card add-food-card" style="margin-bottom: 16px;">
+        <div class="section-title-row">
+            <h3>Search Foods</h3>
+            <span class="tag green">Type to search</span>
+        </div>
+
+        <input
+            id="foodSearch"
+            type="text"
+            placeholder="e.g. chicken breast, banana, oats..."
+            autocomplete="off"
+        />
+
+        <div id="searchResults" class="hidden" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
+        <p id="noResults" class="hidden" style="margin-top: 12px; color: var(--muted); font-size: 13px;">No foods found.</p>
+    </div>
+
+    <!-- Current meal items -->
+    <div class="card add-food-card" style="margin-bottom: 16px;">
+        <div class="section-title-row">
+            <h3>Meal Items</h3>
+            <span class="tag red">{{ meal.meal_time.strftime('%d %b %Y – %H:%M') }}</span>
+        </div>
+
+        <div id="mealItemsContainer">
+            {% if items %}
+            <table class="meal-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <thead>
+                    <tr style="text-align: left; border-bottom: 2px solid #eef4ea;">
+                        <th style="padding: 8px 10px;">Food</th>
+                        <th style="padding: 8px 10px;">Weight</th>
+                        <th style="padding: 8px 10px;">Kcal</th>
+                        <th style="padding: 8px 10px;">Protein</th>
+                        <th style="padding: 8px 10px;">Carbs</th>
+                        <th style="padding: 8px 10px;">Fat</th>
+                        <th style="padding: 8px 10px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="mealItemsBody">
+                    {% for item in items %}
+                    <tr style="border-bottom: 1px solid #eef4ea;"
+                        data-kcal="{{ ((item.food.kcal / 100) * item.weight) | round(1) }}"
+                        data-protein="{{ ((item.food.protein / 100) * item.weight) | round(1) }}"
+                        data-carbs="{{ ((item.food.carbs / 100) * item.weight) | round(1) }}"
+                        data-fat="{{ ((item.food.fats / 100) * item.weight) | round(1) }}">
+                        <td style="padding: 10px;">{{ item.food.food_name }}</td>
+                        <td style="padding: 10px;">{{ item.weight }}g</td>
+                        <td style="padding: 10px;">{{ ((item.food.kcal / 100) * item.weight) | round(1) }}</td>
+                        <td style="padding: 10px;">{{ ((item.food.protein / 100) * item.weight) | round(1) }}g</td>
+                        <td style="padding: 10px;">{{ ((item.food.carbs / 100) * item.weight) | round(1) }}g</td>
+                        <td style="padding: 10px;">{{ ((item.food.fats / 100) * item.weight) | round(1) }}g</td>
+                        <td style="padding: 10px;">
+                            <form method="POST" action="{{ url_for('remove_meal_item', meal_id=meal.meal_id, item_id=item.meal_item_id) }}">
+                                <button class="ghost-btn small-btn" type="submit"
+                                    style="color: var(--accent); border-color: var(--accent); padding: 4px 10px; font-size: 12px;">
+                                    Remove
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p id="emptyHint" class="empty-hint" style="color: var(--muted); font-size: 13px;">
+                No items added yet — search for a food above.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Save meal -->
+    <div class="action-row">
+        {% if items %}
+        <form method="POST" action="{{ url_for('finish_meal', meal_id=meal.meal_id) }}">
+            <button class="tiny-blue big-btn" type="submit">💾 Save Meal to Diary</button>
+        </form>
+        {% else %}
+        <button class="tiny-blue big-btn" disabled style="opacity: 0.5; cursor: not-allowed;">
+            💾 Save Meal to Diary
+        </button>
+        {% endif %}
+    </div>
+
+</section>
+
+<!-- Hidden add item form submitted via JS -->
+<form id="addItemForm" method="POST" action="{{ url_for('add_meal_item', meal_id=meal.meal_id) }}" style="display:none">
+    <input type="hidden" id="addFoodId" name="food_id" />
+    <input type="hidden" id="addWeight" name="weight" />
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const searchInput  = document.getElementById('foodSearch');
+    const resultsBox   = document.getElementById('searchResults');
+    const noResults    = document.getElementById('noResults');
+    const addForm      = document.getElementById('addItemForm');
+    const addFoodId    = document.getElementById('addFoodId');
+    const addWeight    = document.getElementById('addWeight');
+
+    // Compute totals from existing rows on page load
+    recalcTotals();
+
+    let debounceTimer;
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const q = searchInput.value.trim();
+
+        if (!q) {
+            resultsBox.classList.add('hidden');
+            noResults.classList.add('hidden');
+            resultsBox.innerHTML = '';
+            return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+            const res  = await fetch(`{{ url_for('search_food', meal_id=meal.meal_id) }}?q=${encodeURIComponent(q)}`);
+            const data = await res.json();
+
+            resultsBox.innerHTML = '';
+
+            if (!data.length) {
+                resultsBox.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                return;
+            }
+
+            noResults.classList.add('hidden');
+
+            data.forEach(f => {
+                const row = document.createElement('div');
+                row.style.cssText = 'background:#f8fbf6; border-radius:10px; padding:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;';
+                row.innerHTML = `
+                    <div>
+                        <strong style="font-size:14px;">${f.food_name}</strong>
+                        <div style="margin-top:4px; display:flex; gap:8px; flex-wrap:wrap;">
+                            <span class="macro-pill">${f.kcal} kcal</span>
+                            <span class="macro-pill">P: ${f.protein}g</span>
+                            <span class="macro-pill">C: ${f.carbs}g</span>
+                            <span class="macro-pill">F: ${f.fats}g</span>
+                            <span style="font-size:11px; color:var(--muted); align-self:center;">per 100g</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                        <input
+                            type="number"
+                            class="weight-input"
+                            placeholder="g"
+                            min="1"
+                            style="width:72px;"
+                            data-food-id="${f.food_id}"
+                        />
+                        <button
+                            class="tiny-blue small-btn"
+                            onclick="addItem('${f.food_id}', this)"
+                            type="button"
+                        >+ Add</button>
+                    </div>
+                `;
+                resultsBox.appendChild(row);
+            });
+
+            resultsBox.classList.remove('hidden');
+        }, 300);
+    });
+
+    function addItem(foodId, btn) {
+        const row    = btn.closest('div[style]');
+        const input  = row.querySelector('.weight-input');
+        const weight = parseInt(input.value);
+
+        if (!weight || weight < 1) {
+            input.style.borderColor = 'var(--accent)';
+            input.focus();
+            return;
+        }
+
+        input.style.borderColor = '';
+        addFoodId.value = foodId;
+        addWeight.value = weight;
+        addForm.submit();
+    }
+
+    function recalcTotals() {
+        const rows = document.querySelectorAll('#mealItemsBody tr');
+        let kcal = 0, protein = 0, carbs = 0, fat = 0;
+
+        rows.forEach(row => {
+            kcal    += parseFloat(row.dataset.kcal    || 0);
+            protein += parseFloat(row.dataset.protein || 0);
+            carbs   += parseFloat(row.dataset.carbs   || 0);
+            fat     += parseFloat(row.dataset.fat     || 0);
+        });
+
+        document.getElementById('totalKcal').textContent    = Math.round(kcal);
+        document.getElementById('totalProtein').textContent = protein.toFixed(1) + 'g';
+        document.getElementById('totalCarbs').textContent   = carbs.toFixed(1) + 'g';
+        document.getElementById('totalFat').textContent     = fat.toFixed(1) + 'g';
+    }
+</script>
+
+<style>
+    .macro-pill {
+        background: #e7efe3;
+        border-radius: 999px;
+        padding: 3px 8px;
+        font-size: 11px;
+        color: #425541;
+    }
+    .empty-hint {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0;
+    }
+</style>
+{% endblock %}

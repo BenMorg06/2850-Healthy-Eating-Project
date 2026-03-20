@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Meal – {{ meal.meal_time.strftime('%d %b %Y') }} – Healthy Dietary System{% endblock %}
+
+{% block content %}
+<section class="page active" id="meal-view">
+
+    <div class="page-heading">
+        <div>
+            <h1>Meal Details</h1>
+            <p style="margin:0; color:var(--muted); font-size:13px;">
+                {{ meal.meal_time.strftime('%A, %d %B %Y at %H:%M') }}
+            </p>
+        </div>
+        <a href="{{ url_for('diary') }}" class="ghost-btn small-btn">← Back to Diary</a>
+    </div>
+
+    <div class="diary-summary" style="margin-bottom: 16px;">
+        <div class="diary-summary-box">
+            <strong>{{ total_kcal }}</strong>
+            <span>kcal</span>
+        </div>
+        <div class="diary-summary-box">
+            <strong>{{ total_protein }}g</strong>
+            <span>Protein</span>
+        </div>
+        <div class="diary-summary-box">
+            <strong>{{ total_carbs }}g</strong>
+            <span>Carbs</span>
+        </div>
+        <div class="diary-summary-box">
+            <strong>{{ total_fat }}g</strong>
+            <span>Fat</span>
+        </div>
+    </div>
+
+
+    <div class="card" style="padding: 16px; margin-bottom: 16px;">
+        <div class="section-title-row">
+            <h3>Food Items</h3>
+            <span class="tag green">{{ items | length }} item(s)</span>
+        </div>
+
+        {% if items %}
+        <table class="meal-table" style="width:100%; border-collapse:collapse; font-size:13px;">
+            <thead>
+                <tr style="text-align:left; border-bottom: 2px solid #eef4ea;">
+                    <th style="padding: 10px;">Food</th>
+                    <th style="padding: 10px;">Weight</th>
+                    <th style="padding: 10px;">Kcal</th>
+                    <th style="padding: 10px;">Protein</th>
+                    <th style="padding: 10px;">Carbs</th>
+                    <th style="padding: 10px;">Fat</th>
+                    <th style="padding: 10px;">Sugar</th>
+                    <th style="padding: 10px;">Fibre</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                {% set kcal    = ((item.food.kcal    / 100) * item.weight) | round(1) %}
+                {% set protein = ((item.food.protein / 100) * item.weight) | round(1) %}
+                {% set carbs   = ((item.food.carbs   / 100) * item.weight) | round(1) %}
+                {% set fat     = ((item.food.fats    / 100) * item.weight) | round(1) %}
+                {% set sugar   = ((item.food.sugar   / 100) * item.weight) | round(1) %}
+                {% set fibre   = ((item.food.fibre   / 100) * item.weight) | round(1) %}
+                <tr style="border-bottom: 1px solid #eef4ea;">
+                    <td style="padding: 12px 10px; font-weight: 700;">{{ item.food.food_name }}</td>
+                    <td style="padding: 12px 10px;">{{ item.weight }}g</td>
+                    <td style="padding: 12px 10px;">{{ kcal }}</td>
+                    <td style="padding: 12px 10px;">{{ protein }}g</td>
+                    <td style="padding: 12px 10px;">{{ carbs }}g</td>
+                    <td style="padding: 12px 10px;">{{ fat }}g</td>
+                    <td style="padding: 12px 10px;">{{ sugar }}g</td>
+                    <td style="padding: 12px 10px;">{{ fibre }}g</td>
+                </tr>
+                <!-- Per item macro bar -->
+                <tr style="border-bottom: 2px solid #eef4ea;">
+                    <td colspan="8" style="padding: 4px 10px 12px;">
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <div class="macro-bar-segment" style="--size: {{ protein }}; background: var(--green);" title="Protein"></div>
+                            <div class="macro-bar-segment" style="--size: {{ carbs }};   background: #e8d68c;"      title="Carbs"></div>
+                            <div class="macro-bar-segment" style="--size: {{ fat }};     background: var(--accent);" title="Fat"></div>
+                        </div>
+                        <div style="display:flex; gap:14px; margin-top:4px; font-size:11px; color:var(--muted);">
+                            <span style="color:var(--green);">■ Protein</span>
+                            <span style="color:#c7af58;">■ Carbs</span>
+                            <span style="color:var(--accent);">■ Fat</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p style="color:var(--muted); font-size:13px;">No items in this meal.</p>
+        {% endif %}
+    </div>
+
+    
+    <div class="card" style="padding: 16px;">
+        <div class="section-title-row">
+            <h3>Professional Comments</h3>
+            <span class="tag green">{{ comments | length }}</span>
+        </div>
+
+        {% if comments %}
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                {% for comment in comments %}
+                <div class="diary-entry">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <h4 style="margin:0;">{{ comment.title }}</h4>
+                        <span style="font-size:11px; color:var(--muted);">
+                            {{ comment.created_at.strftime('%d %b %Y') }}
+                        </span>
+                    </div>
+                    <p style="margin:0 0 6px; font-size:13px; line-height:1.6;">{{ comment.body }}</p>
+                    <p class="meta">By {{ comment.professional.name }} · {{ comment.professional.profession }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color:var(--muted); font-size:13px;">No comments from professionals yet.</p>
+        {% endif %}
+    </div>
+
+</section>
+{% endblock %}

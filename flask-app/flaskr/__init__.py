@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
@@ -25,8 +25,16 @@ def create_app(test_config=None):
         from flaskr import models
         db.create_all()
 
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
+    @app.route('/')
+    def home():
+        return render_template('base.html')
+    
+    @app.route('/dashboard')
+    def dashboard():
+        return render_template('dashboard.html')
+    
+    @app.route('/diary')
+    def diary():
+        return render_template('diary.html')
 
     return app

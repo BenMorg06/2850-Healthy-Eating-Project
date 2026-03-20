@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>{% block title %}Healthy Dietary System{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">🍽</div>
+                <div>
+                    <h2>Healthy</h2>
+                    <p>Dietary System</p>
+                </div>
+            </div>
+
+            <div class="side-divider"></div>
+
+            <a href="{{ url_for('dashboard') }}" class="side-btn {% if active_page == 'dashboard' %}active{% endif %}">
+                <span>🏠</span><span>Dashboard</span>
+            </a>
+            <button class="side-btn" data-page="menu">
+                <span>📋</span><span>Menu</span>
+            </button>
+            <button class="side-btn" data-page="favourite">
+                <span>❤️</span><span>Favourite</span>
+            </button>
+            <a href="{{ url_for('diary') }}" class="side-btn {% if active_page == 'diary' %}active{% endif %}">
+                <span>📔</span><span>Diary</span>
+            </a>
+        </aside>
+
+        <div class="main-area">
+            <main class="page-wrap">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                {% block content %}
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

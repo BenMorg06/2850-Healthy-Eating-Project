@@ -1088,3 +1088,29 @@ label {
         width: 240px;
     }
 }
+
+.flash-message {
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.flash-success {
+    background: #eef4ea;
+    border-left: 4px solid var(--green);
+    color: var(--green-dark);
+}
+
+.flash-error {
+    background: #fdf0ee;
+    border-left: 4px solid var(--accent);
+    color: var(--accent);
+}
+
+.macro-bar-segment {
+    flex: var(--size);
+    height: 6px;
+    border-radius: 999px;
+}

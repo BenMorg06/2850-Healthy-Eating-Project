@@ -1,3 +1,195 @@
 {% extends "base.html" %}
 
 {% block title %}Diary – Healthy Dietary System{% endblock %}
+
+{% block content %}
+<section class="page active" id="diary">
+    <div class="page-heading">
+        <h1>Diary</h1>
+        <a href="{{ url_for('create_meal') }}" class="tiny-blue big-btn">+ Add Meal</a>
+    </div>
+
+    <div class="card diary-editor">
+        <div class="section-title-row">
+            <h3>Daily Food Diary</h3>
+            <div class="filter-row diary-filter-row" style="gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                <div>
+                    <label>Search Food</label>
+                    <input id="foodSearch" type="text" placeholder="e.g. chicken..." style="width: 160px;" />
+                </div>
+                <div>
+                    <label>Date</label>
+                    <input id="diaryDateFilter" type="date" />
+                </div>
+                <div>
+                    <label>From</label>
+                    <input id="dateFrom" type="date" />
+                </div>
+                <div>
+                    <label>To</label>
+                    <input id="dateTo" type="date" />
+                </div>
+                <button id="clearFilters" class="ghost-btn small-btn" type="button">Clear</button>
+            </div>
+        </div>
+
+        <p id="noResultsMsg" class="hidden" style="color: var(--muted); font-size: 13px; margin-bottom: 12px;">
+            No meals match your filters.
+        </p>
+
+        {% if meals %}
+            <div id="diaryEntries" class="diary-entries">
+                {% for meal in meals %}
+                <div class="card meal-entry"
+                    data-date="{{ meal.meal_time.strftime('%Y-%m-%d') }}"
+                    data-foods="{{ meal.items | map(attribute='food') | map(attribute='food_name') | join(',') | lower }}">
+ 
+                    <div class="section-title-row">
+                        <a href="{{ url_for('view_meal', meal_id=meal.meal_id) }}" style="text-decoration:none; color:inherit;">
+                            <h4>{{ meal.meal_time.strftime('%d %b %Y – %H:%M') }} →</h4>
+                        </a>
+                        <span class="tag red">{{ meal.items | length }} item(s)</span>
+                    </div>
+ 
+                    {% if meal.items %}
+                    <table class="meal-table">
+                        <thead>
+                            <tr>
+                                <th>Food</th>
+                                <th>Weight (g)</th>
+                                <th>Kcal</th>
+                                <th>Protein</th>
+                                <th>Carbs</th>
+                                <th>Fat</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in meal.items %}
+                            <tr>
+                                <td>{{ item.food.food_name }}</td>
+                                <td>{{ item.weight }}g</td>
+                                <td>{{ ((item.food.kcal / 100) * item.weight) | round(1) }}</td>
+                                <td>{{ ((item.food.protein / 100) * item.weight) | round(1) }}g</td>
+                                <td>{{ ((item.food.carbs / 100) * item.weight) | round(1) }}g</td>
+                                <td>{{ ((item.food.fats / 100) * item.weight) | round(1) }}g</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                        <p class="empty-hint">No items in this meal yet.</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+ 
+        <div id="pagination" style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:16px;">
+                <button id="prevPage" class="ghost-btn small-btn">← Prev</button>
+                <span id="pageInfo" style="font-size:13px; color:var(--muted);"></span>
+                <button id="nextPage" class="ghost-btn small-btn">Next →</button>
+            </div>
+ 
+        {% else %}
+            <div class="diary-summary">
+                <p class="empty-hint">No meals logged yet. Click <strong>+ Add Meal</strong> to get started.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const MEALS_PER_PAGE = 10;
+
+        const allMeals     = Array.from(document.querySelectorAll('.meal-entry'));
+        const foodSearch   = document.getElementById('foodSearch');
+        const dateFilter   = document.getElementById('diaryDateFilter');
+        const dateFrom     = document.getElementById('dateFrom');
+        const dateTo       = document.getElementById('dateTo');
+        const clearBtn     = document.getElementById('clearFilters');
+        const noResultsMsg = document.getElementById('noResultsMsg');
+        const prevBtn      = document.getElementById('prevPage');
+        const nextBtn      = document.getElementById('nextPage');
+        const pageInfo     = document.getElementById('pageInfo');
+
+        let currentPage   = 1;
+        let filteredMeals = [...allMeals];
+
+        function applyFilters() {
+            const foodQuery = foodSearch.value.trim().toLowerCase();
+            const exactDate = dateFilter.value;
+            const fromDate  = dateFrom.value;
+            const toDate    = dateTo.value;
+
+            filteredMeals = allMeals.filter(meal => {
+                const mealDate  = meal.dataset.date;
+                const mealFoods = meal.dataset.foods;
+                if (foodQuery && !mealFoods.includes(foodQuery)) return false;
+                if (exactDate  && mealDate !== exactDate)        return false;
+                if (fromDate   && mealDate < fromDate)           return false;
+                if (toDate     && mealDate > toDate)             return false;
+                return true;
+            });
+            currentPage = 1;
+            render();
+        }
+
+        function render() {
+            allMeals.forEach(m => m.style.display = 'none');
+            if (filteredMeals.length === 0) {
+                noResultsMsg.classList.remove('hidden');
+                updatePagination(0);
+                return;
+            }
+            noResultsMsg.classList.add('hidden');
+            const totalPages = Math.ceil(filteredMeals.length / MEALS_PER_PAGE);
+            currentPage = Math.min(currentPage, totalPages);
+            const start = (currentPage - 1) * MEALS_PER_PAGE;
+            const end   = start + MEALS_PER_PAGE;
+            filteredMeals.slice(start, end).forEach(m => m.style.display = 'block');
+            updatePagination(totalPages);
+        }
+
+        function updatePagination(totalPages) {
+            const paginationEl = document.getElementById('pagination');
+            if (!paginationEl) return;
+            if (totalPages <= 1) {
+                paginationEl.style.display = 'none';
+                return;
+            }
+            paginationEl.style.display = 'flex';
+            pageInfo.textContent  = `Page ${currentPage} of ${totalPages}`;
+            prevBtn.disabled      = currentPage === 1;
+            nextBtn.disabled      = currentPage === totalPages;
+            prevBtn.style.opacity = currentPage === 1 ? '0.4' : '1';
+            nextBtn.style.opacity = currentPage === totalPages ? '0.4' : '1';
+        }
+
+        foodSearch.addEventListener('input',  applyFilters);
+        dateFilter.addEventListener('change', applyFilters);
+        dateFrom.addEventListener('change',   applyFilters);
+        dateTo.addEventListener('change',     applyFilters);
+
+        clearBtn.addEventListener('click', () => {
+            foodSearch.value = '';
+            dateFilter.value = '';
+            dateFrom.value   = '';
+            dateTo.value     = '';
+            applyFilters();
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentPage > 1) { currentPage--; render(); }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredMeals.length / MEALS_PER_PAGE);
+            if (currentPage < totalPages) { currentPage++; render(); }
+        });
+
+        render();
+    });
+</script>
+{% endblock %}

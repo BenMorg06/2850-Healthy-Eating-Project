@@ -1,0 +1,363 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">🍽</div>
+            <div>
+                <h2>Healthy</h2>
+                <p>Dietary System</p>
+            </div>
+        </div>
+        <div class="side-divider"></div>
+        {% for nav in [('dashboard','🏠','Dashboard'),('menu','📋','Menu'),('favourite','❤️','Favourite'),('professional','📊','Professional'),('diary','📔','Diary')] %}
+        <a class="side-link" href="{{ url_for('main.home', page=nav[0], diary_date=diary_date, professional_date=professional_date, client_id=selected_client_id) }}">
+            <button class="side-btn {{ 'active' if page == nav[0] else '' }}" type="button">
+                <span>{{ nav[1] }}</span><span>{{ nav[2] }}</span>
+            </button>
+        </a>
+        {% endfor %}
+    </aside>
+
+    <div class="main-area">
+        <main class="page-wrap">
+            <div class="flash-wrap">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endwith %}
+            </div>
+
+            {% if page == 'dashboard' %}
+            <section class="page active" id="dashboard">
+                <div class="page-heading dashboard-title-row">
+                    <h1>Dashboard</h1>
+                    <div class="top-actions">
+                        <a href="{{ url_for('main.home', page='dashboard', diary_date=diary_date, professional_date=professional_date) }}#messages" class="icon-btn profile-link">🔔</a>
+                        <a href="{{ url_for('auth.logout') }}" class="icon-btn profile-link">👤</a>
+                    </div>
+                </div>
+                <div class="dashboard-fixed-grid">
+                    <div class="card intro-card">
+                        <div class="intro-top">
+                            <div class="intro-icon">🍴</div>
+                            <div>
+                                <h3>Healthy Dietary</h3>
+                                <p>Data-based healthy eating support</p>
+                            </div>
+                        </div>
+                        <ul class="intro-list">
+                            <li>Recommended foods with favourite support</li>
+                            <li>Quick add food records by grams</li>
+                            <li>Diary records generated from added foods</li>
+                            <li>Professional monitoring with note support</li>
+                        </ul>
+                        <h4>Weekly Energy Intake</h4>
+                        <div class="line-chart">
+                            <span style="left: 8%; top: 66%"></span>
+                            <span style="left: 20%; top: 60%"></span>
+                            <span style="left: 32%; top: 62%"></span>
+                            <span style="left: 44%; top: 50%"></span>
+                            <span style="left: 56%; top: 54%"></span>
+                            <span style="left: 68%; top: 40%"></span>
+                            <span style="left: 80%; top: 44%"></span>
+                            <span style="left: 92%; top: 36%"></span>
+                            <svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="8,66 20,60 32,62 44,50 56,54 68,40 80,44 92,36"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="card menu-preview-card">
+                        <div class="section-title-row"><h3>Recommended Foods</h3><span class="tag red">Menu</span></div>
+                        <div class="preview-grid">
+                            {% for name in ['Chicken Breast','Fruit Bowl','Yogurt Cup','Healthy Soup','Avocado Toast','Fresh Salad'] %}
+                            <div class="preview-box"><p>{{ name }}</p></div>
+                            {% endfor %}
+                        </div>
+                        <div class="feature-icons"><div><span>❤️</span><p>Favourite</p></div><div><span>➕</span><p>Quick Add</p></div></div>
+                    </div>
+                    <div class="card score-card"><div class="score-ring"><div class="ring-inner"><strong>82%</strong><span>Healthy Score</span></div></div></div>
+                    <div class="card stat-card">
+                        <div class="bar-stat"><div class="bar-fill" style="height: 78%"></div><p>Protein</p><small>78g</small></div>
+                        <div class="bar-stat"><div class="bar-fill" style="height: 62%"></div><p>Carbs</p><small>164g</small></div>
+                        <div class="bar-stat"><div class="bar-fill" style="height: 70%"></div><p>Fat</p><small>49g</small></div>
+                    </div>
+                </div>
+                <div class="card note-box" id="messages" style="padding:16px;margin-top:16px;">
+                    <div class="section-title-row">
+                        <h3>Messages</h3>
+                        <span class="tag red">{{ unread_user_notes }} unread</span>
+                    </div>
+                    {% if user_notes %}
+                        <div class="bell-list">
+                        {% for note in user_notes %}
+                            <div class="bell-item">
+                                <h4>Professional Note</h4>
+                                <p>{{ note['message'] }}</p>
+                                <div class="meta">{{ note['date'] }}{% if note['read_by_client'] %} · Read{% else %} · New{% endif %}</div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                        <form method="post" action="{{ url_for('notes.mark_notes_read') }}" class="action-row"><button class="tiny-blue big-btn" type="submit">Mark as Read</button></form>
+                    {% else %}
+                        <div class="empty-state">No messages.</div>
+                    {% endif %}
+                </div>
+            </section>
+            {% elif page == 'menu' %}
+            <section class="page active" id="menu">
+                <div class="page-heading"><h1>Menu</h1></div>
+                <div class="menu-page-layout">
+                    <div class="card add-food-card">
+                        <h3>Manual Food Entry</h3>
+                        <div class="mode-switch">
+                            <a href="{{ url_for('main.home', page='menu', entry_mode='lookup', diary_date=diary_date, professional_date=professional_date) }}" class="mode-btn {{ 'active' if entry_mode != 'manual' else '' }}">Food Lookup</a>
+                            <a href="{{ url_for('main.home', page='menu', entry_mode='manual', diary_date=diary_date, professional_date=professional_date) }}" class="mode-btn {{ 'active' if entry_mode == 'manual' else '' }}">Manual Recipe Entry</a>
+                        </div>
+
+                        {% if entry_mode == 'manual' %}
+                        <form method="post" action="{{ url_for('food.save_recipe') }}" class="entry-panel active">
+                            <div class="form-grid">
+                                <div><label>Date</label><input name="date" type="date" value="{{ today }}" /></div>
+                                <div><label>Recipe Name</label><input name="name" type="text" placeholder="e.g. Homemade Chicken Pasta" /></div>
+                                <div><label>Total Grams</label><input name="grams" type="number" placeholder="e.g. 350" /></div>
+                                <div><label>Category</label><input name="category" type="text" placeholder="e.g. Manual Recipe" /></div>
+                                <div class="full-width"><label>Ingredients / Recipe Notes</label><textarea name="ingredients" placeholder="e.g. chicken breast, pasta, olive oil, broccoli..."></textarea></div>
+                                <div><label>Calories</label><input name="calories" type="number" placeholder="e.g. 520" /></div>
+                                <div><label>Protein (g)</label><input name="protein" type="number" placeholder="e.g. 35" /></div>
+                                <div><label>Carbs (g)</label><input name="carbs" type="number" placeholder="e.g. 42" /></div>
+                                <div><label>Fat (g)</label><input name="fat" type="number" placeholder="e.g. 18" /></div>
+                            </div>
+                            <p class="helper-text">Use this when the food is not found in the database.</p>
+                            <div class="action-row"><button class="tiny-blue big-btn" type="submit">Save Manual Recipe</button></div>
+                        </form>
+                        {% else %}
+                        <form method="post" action="{{ url_for('food.food_lookup') }}" class="entry-panel active">
+                            <input type="hidden" name="page" value="menu" />
+                            <div class="form-grid single-column">
+                                <div><label>Date</label><input name="date" type="date" value="{{ today }}" /></div>
+                                <div><label>Food Name</label><input name="food_name" type="text" placeholder="e.g. Chicken Breast" /></div>
+                                <div><label>Grams</label><input name="grams" type="number" placeholder="e.g. 150" /></div>
+                            </div>
+                            <p class="helper-text">The system calculates calories and nutrition automatically from the food database.</p>
+                            <div class="action-row split">
+                                <button class="ghost-btn" type="submit">Check Food</button>
+                            </div>
+                        </form>
+                        <form method="post" action="{{ url_for('food.add_food') }}" style="margin-top:12px;">
+                            <div class="form-grid single-column">
+                                <div><label>Date</label><input name="date" type="date" value="{{ today }}" /></div>
+                                <div><label>Food Name</label><input name="food_name" type="text" placeholder="e.g. Chicken Breast" /></div>
+                                <div><label>Grams</label><input name="grams" type="number" placeholder="e.g. 150" /></div>
+                            </div>
+                            <div class="action-row"><button class="tiny-blue big-btn" type="submit">Add Record</button></div>
+                        </form>
+                        <div class="lookup-result">{{ food_lookup_result or 'Use Check Food to view the nutrition calculation result.' }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="card recommended-card">
+                        <div class="section-title-row"><h3>Recommended Foods</h3><span class="tag green">Quick Add Available</span></div>
+                        <div class="menu-grid">
+                            {% for food in foods %}
+                            <div class="menu-card">
+                                <img src="{{ food['img'] }}" alt="{{ food['name'] }}">
+                                <h4>{{ food['name'] }}</h4>
+                                <p>{{ food['category'] }}</p>
+                                <div class="macro-row">
+                                    <span>{{ food['calories'] }} kcal / 100g</span>
+                                    <span>P {{ food['protein'] }}g</span>
+                                    <span>C {{ food['carbs'] }}g</span>
+                                    <span>F {{ food['fat'] }}g</span>
+                                </div>
+                                <div class="card-action-row">
+                                    <form class="mini-form" method="post" action="{{ url_for('food.toggle_favourite', food_id=food['id']) }}"><button class="like-btn" type="submit">{{ '♥ Liked' if food['id'] in favourite_ids else '♡ Like' }}</button></form>
+                                    <a class="quick-btn" href="{{ url_for('main.home', page='menu', quick_add_food_id=food['id'], diary_date=diary_date, professional_date=professional_date) }}">Quick Add</a>
+                                </div>
+                                {% if quick_add_food_id == food['id'] %}
+                                <form class="inline-card-form" method="post" action="{{ url_for('food.quick_add', food_id=food['id']) }}">
+                                    <input type="hidden" name="page" value="menu" />
+                                    <label>Date</label><input name="date" type="date" value="{{ today }}" />
+                                    <label>Grams</label><input name="grams" type="number" placeholder="e.g. 150" />
+                                    <div class="action-row"><button class="tiny-blue big-btn" type="submit">Add to Diary</button></div>
+                                </form>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+            {% elif page == 'favourite' %}
+            <section class="page active" id="favourite">
+                <div class="page-heading"><h1>Favourite</h1></div>
+                <div class="card favourite-card">
+                    <div class="section-title-row"><h3>Favourite Foods</h3><span class="tag red">Liked Items</span></div>
+                    {% if favourite_foods %}
+                    <div class="menu-grid">
+                        {% for food in favourite_foods %}
+                        <div class="menu-card">
+                            <img src="{{ food['img'] }}" alt="{{ food['name'] }}">
+                            <h4>{{ food['name'] }}</h4>
+                            <p>{{ food['category'] }}</p>
+                            <div class="macro-row">
+                                <span>{{ food['calories'] }} kcal / 100g</span>
+                                <span>P {{ food['protein'] }}g</span>
+                                <span>C {{ food['carbs'] }}g</span>
+                                <span>F {{ food['fat'] }}g</span>
+                            </div>
+                            <div class="card-action-row">
+                                <form class="mini-form" method="post" action="{{ url_for('food.toggle_favourite', food_id=food['id']) }}"><button class="like-btn" type="submit">♥ Liked</button></form>
+                                <a class="quick-btn" href="{{ url_for('main.home', page='favourite', quick_add_food_id=food['id'], diary_date=diary_date, professional_date=professional_date) }}">Quick Add</a>
+                            </div>
+                            {% if quick_add_food_id == food['id'] %}
+                            <form class="inline-card-form" method="post" action="{{ url_for('food.quick_add', food_id=food['id']) }}">
+                                <input type="hidden" name="page" value="favourite" />
+                                <label>Date</label><input name="date" type="date" value="{{ today }}" />
+                                <label>Grams</label><input name="grams" type="number" placeholder="e.g. 150" />
+                                <div class="action-row"><button class="tiny-blue big-btn" type="submit">Add to Diary</button></div>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">No favourite foods yet.</div>
+                    {% endif %}
+                </div>
+            </section>
+            {% elif page == 'professional' %}
+            <section class="page active" id="professional">
+                <div class="page-heading"><h1>Professional</h1></div>
+                <div class="professional-layout">
+                    <div class="card client-list-card">
+                        <h3>Client List</h3>
+                        <div class="client-list">
+                            {% for client in clients %}
+                            <a href="{{ url_for('main.home', page='professional', client_id=client['id'], professional_date=professional_date, diary_date=diary_date) }}" class="client-item {{ 'active' if client['id'] == selected_client_id else '' }}">
+                                <h4>{{ client['username'] }}</h4>
+                                <p>{{ client['status'] }}</p>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="pro-main">
+                        <div class="card pro-toolbar-card">
+                            <div class="pro-toolbar-top">
+                                <div>
+                                    <h3>{{ selected_client['username'] if selected_client else 'Client' }}</h3>
+                                    <p class="muted-line">Dietary record for {{ professional_date }}</p>
+                                </div>
+                                <a href="#notes" class="icon-btn">🔔</a>
+                            </div>
+                            <form method="get" class="filter-row pro-filter-row">
+                                <input type="hidden" name="page" value="professional" />
+                                <input type="hidden" name="client_id" value="{{ selected_client_id }}" />
+                                <div><label>Date</label><input name="professional_date" type="date" value="{{ professional_date }}" /></div>
+                                <button class="ghost-btn small-btn" type="submit">Apply</button>
+                                <a class="ghost-btn small-btn" href="{{ url_for('main.home', page='professional', client_id=selected_client_id, professional_date=today, diary_date=diary_date) }}">Today</a>
+                            </form>
+                        </div>
+                        <div class="card pro-summary-card">
+                            <h3>Daily Nutrition Summary</h3>
+                            <div class="pro-summary-grid">
+                                <div class="summary-box"><strong>{{ professional_totals['calories'] }} kcal</strong><span>Calories</span></div>
+                                <div class="summary-box"><strong>{{ professional_totals['protein'] }} g</strong><span>Protein</span></div>
+                                <div class="summary-box"><strong>{{ professional_totals['carbs'] }} g</strong><span>Carbs</span></div>
+                                <div class="summary-box"><strong>{{ professional_totals['fat'] }} g</strong><span>Fat</span></div>
+                            </div>
+                        </div>
+                        <div class="pro-chart-row">
+                            <div class="card pro-chart-card">
+                                <h3>Client Foods on Selected Date</h3>
+                                <div class="professional-food-list">
+                                    {% if professional_records %}
+                                        {% for item in professional_records %}
+                                        <div class="professional-food-item">
+                                            <h4>{{ item['name'] }}</h4>
+                                            <p>{{ item['date'] }} · {{ item['grams']|round1 }} g · {{ item['calories']|round1 }} kcal</p>
+                                            <p>Protein {{ item['protein']|round1 }} g · Carbs {{ item['carbs']|round1 }} g · Fat {{ item['fat']|round1 }} g</p>
+                                            {% if item['ingredients'] %}<p>Recipe: {{ item['ingredients'] }}</p>{% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="empty-state">No food records for this client on the selected date.</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card pro-chart-card small-pro-card">
+                                <h3>Macro Balance</h3>
+                                {% set max_macro = [professional_totals['protein'], professional_totals['carbs'], professional_totals['fat'], 1]|max %}
+                                <div class="mini-bars pro-mini-bars">
+                                    <div class="mini-bar"><i style="height: {{ [18, (professional_totals['protein']/max_macro*100)|round(0)|int]|max }}%"></i><p>Protein</p><small>{{ professional_totals['protein'] }}g</small></div>
+                                    <div class="mini-bar"><i style="height: {{ [18, (professional_totals['carbs']/max_macro*100)|round(0)|int]|max }}%"></i><p>Carbs</p><small>{{ professional_totals['carbs'] }}g</small></div>
+                                    <div class="mini-bar"><i style="height: {{ [18, (professional_totals['fat']/max_macro*100)|round(0)|int]|max }}%"></i><p>Fat</p><small>{{ professional_totals['fat'] }}g</small></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card pro-note-card" id="notes">
+                            <h3>Professional Note</h3>
+                            <form method="post" action="{{ url_for('notes.send_note') }}">
+                                <input type="hidden" name="client_id" value="{{ selected_client_id }}" />
+                                <input type="hidden" name="professional_date" value="{{ professional_date }}" />
+                                <textarea name="note_text" placeholder="Write a note for this client..."></textarea>
+                                <div class="action-row"><button class="tiny-blue big-btn" type="submit">Send Note</button></div>
+                            </form>
+                            <div class="quick-add-box">
+                                <div class="section-title-row"><h3>Client Notes</h3><span class="tag red">{{ pro_notes|length }}</span></div>
+                                {% if pro_notes %}
+                                    <div class="bell-list">
+                                    {% for note in pro_notes %}
+                                        <div class="bell-item"><h4>Professional Note</h4><p>{{ note['message'] }}</p><div class="meta">{{ note['date'] }}</div></div>
+                                    {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <div class="empty-state">No notes for this client.</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            {% elif page == 'diary' %}
+            <section class="page active" id="diary">
+                <div class="page-heading"><h1>Diary</h1></div>
+                <div class="card diary-editor">
+                    <div class="section-title-row">
+                        <h3>Daily Food Diary</h3>
+                        <form method="get" class="filter-row diary-filter-row">
+                            <input type="hidden" name="page" value="diary" />
+                            <input type="hidden" name="professional_date" value="{{ professional_date }}" />
+                            <input type="hidden" name="client_id" value="{{ selected_client_id }}" />
+                            <div><label>Date</label><input name="diary_date" type="date" value="{{ diary_date }}" /></div>
+                            <button class="ghost-btn small-btn" type="submit">Apply</button>
+                            <a class="ghost-btn small-btn" href="{{ url_for('main.home', page='diary', diary_date=today, professional_date=professional_date, client_id=selected_client_id) }}">Today</a>
+                        </form>
+                    </div>
+                    <div class="diary-summary">
+                        <div class="diary-summary-box"><strong>{{ diary_totals['calories'] }} kcal</strong><span>Calories</span></div>
+                        <div class="diary-summary-box"><strong>{{ diary_totals['protein'] }} g</strong><span>Protein</span></div>
+                        <div class="diary-summary-box"><strong>{{ diary_totals['carbs'] }} g</strong><span>Carbs</span></div>
+                        <div class="diary-summary-box"><strong>{{ diary_totals['fat'] }} g</strong><span>Fat</span></div>
+                    </div>
+                    <div class="diary-entries">
+                        {% if diary_records %}
+                            {% for item in diary_records %}
+                            <div class="diary-entry">
+                                <h4>{{ item['name'] }}</h4>
+                                <div class="meta">{{ item['date'] }} · {{ item['grams']|round1 }} g · {{ item['category'] }}</div>
+                                <p>Calories: {{ item['calories']|round1 }} kcal</p>
+                                <p>Protein: {{ item['protein']|round1 }} g · Carbs: {{ item['carbs']|round1 }} g · Fat: {{ item['fat']|round1 }} g</p>
+                                {% if item['ingredients'] %}<p>Recipe: {{ item['ingredients'] }}</p>{% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">No diary food records for this date.</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}

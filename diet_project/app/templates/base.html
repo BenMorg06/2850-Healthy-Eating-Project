@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Healthy Dietary System{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <style>
+        .flash-wrap { margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
+        .flash { padding: 12px 14px; border-radius: 10px; background: #eef4ea; box-shadow: var(--shadow); }
+        .flash.error { border-left: 4px solid #e44d35; }
+        .flash.success { border-left: 4px solid #5a9b56; }
+        .mini-form { display: inline; margin: 0; }
+        .side-link { width: 100%; }
+        .side-link .side-btn { width: 100%; }
+        .page { display: block; }
+        .inline-card-form { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(79,125,67,.12); }
+        .note-box { margin-top: 14px; }
+        .quick-add-box { margin-top: 14px; padding: 12px; border-radius: 10px; background: #f8fbf6; }
+        .top-actions { display:flex; gap:10px; align-items:center; }
+    </style>
+</head>
+<body>
+    {% block body %}{% endblock %}
+</body>
+</html>

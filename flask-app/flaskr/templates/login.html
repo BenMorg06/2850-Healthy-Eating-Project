@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Login / Register - Healthy Dietary System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+
+<body class="auth-body">
+    <div class="auth-wrapper">
+        <div class="auth-left">
+            <div class="auth-brand">
+                <div class="brand-mark large">🍽</div>
+                <h1>Healthy Dietary System</h1>
+                <p>Sign in to manage your dietary records, view your food diary and seek professional support.</p>
+            </div>
+        </div>
+
+        <div class="auth-right">
+            <div class="auth-card">
+                <div class="auth-tab-row">
+                    <a id="registerTab" class="auth-tab active" href="{{ url_for('register') }}">Don't have an account? Register here</a>
+                </div>
+
+                <!-- LOGIN -->
+                <form id="loginForm" class="auth-form active" action="{{ url_for('login') }}" method="POST">
+                    <h2>Login</h2>
+
+                    {% if login_error %}
+                    <p class="auth-error">{{ login_error }}</p>
+                    {% endif %}
+
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" name="email" placeholder="Enter your email" required />
+
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" name="password" placeholder="Enter your password" required />
+
+                    <button type="submit" class="auth-submit {% if active_page == 'dashboard' %}active{% endif %}">Log in</button>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

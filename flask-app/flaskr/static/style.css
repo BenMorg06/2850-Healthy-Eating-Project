@@ -1007,6 +1007,16 @@ label {
     font-size: 24px;
 }
 
+.auth-error {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #fde7e3;
+    color: #9b1f14;
+    border: 1px solid #f2bbb3;
+    font-size: 14px;
+}
+
 .auth-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;

@@ -11,4 +11,4 @@ main_bp = Blueprint('main', __name__)
 def home():
     if not current_user():
         return redirect(url_for('auth.auth_page', tab='login'))
-    return render_template('index.html', **build_context())
+    return render_template('index.html', **build_context(), score=75)

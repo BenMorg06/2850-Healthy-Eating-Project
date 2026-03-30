@@ -43,6 +43,8 @@ class Subscriber(db.Model):
     managed_by = db.relationship('Manages', backref='subscriber')
 
     # Subscriber CRUD methods
+    def get_id(self):
+        return str(self.subscriber_id)
 
     @classmethod
     def create_new_subscriber(cls, email, name, address, pswd_hash, sex, date_of_birth, height, weight):

@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-from flask import Flask, abort, jsonify, render_template, request, session, redirect, url_for, flash
+from flask import Flask, abort, app, jsonify, render_template, request, session, redirect, url_for, flash
 from flaskr.extensions import db
 from flaskr.models import Comment, Food, MealItem, Subscriber, Meal
 
@@ -23,19 +23,35 @@ def create_app(test_config=None):
 
     with app.app_context():
         from flaskr import models
+        from flaskr.auth import auth_bp
+        app.register_blueprint(auth_bp)
         db.create_all()
+
+    @app.before_request
+    def check_login():
+        # 1. Define routes that DON'T require login (like the auth page and static files)
+        allowed_routes = ['auth.login', 'auth.logout', 'auth.register', 'static'] 
+        
+        # 2. If the user is not logged in and trying to access a protected page
+        if 'user_id' not in session and request.endpoint not in allowed_routes:
+            return redirect(url_for('auth.login'))
 
     @app.route('/')
     def home():
         return render_template('base.html')
     
+    def get_current_subscriber():
+        user_id = session.get('user_id')
+        if not user_id:
+            return None
+        return db.session.get(Subscriber, user_id)
+
     @app.route('/diary')
     def diary():
-        subscriber_id = 1 # for development, we will just use the first subscriber. In production, this should come from the session or authentication system.
-        if not subscriber_id:
-            return redirect(url_for('dashboard'))
-        
-        subscriber = db.session.get(Subscriber, subscriber_id)
+        subscriber = get_current_subscriber()
+        if not subscriber:
+            return redirect(url_for('auth.login'))
+
         all_meals = db.session.query(Meal).filter_by(diary_id=subscriber.diary_id)\
                 .order_by(Meal.meal_time.desc())\
                 .all()
@@ -48,8 +64,9 @@ def create_app(test_config=None):
     
     @app.route('/create_meal', methods=['GET'])
     def create_meal():
-        subscriber_id = 1
-        subscriber = db.session.get(Subscriber, subscriber_id)
+        subscriber = get_current_subscriber()
+        if not subscriber:
+            return redirect(url_for('auth.login'))
 
         meal = Meal.create_new_meal(subscriber.diary_id, meal_time=datetime.now())
         return redirect(url_for('edit_meal', meal_id=meal.meal_id))

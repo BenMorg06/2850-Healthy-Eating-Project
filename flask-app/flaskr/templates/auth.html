@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Login / Register - Healthy Dietary System{% endblock %}
-{% block body %}
-<body class="auth-body">
+{% block content %}
+<div class="auth-body">
     <div class="auth-wrapper">
         <div class="auth-left">
             <div class="auth-brand">
@@ -23,12 +23,13 @@
                 </div>
 
                 <div class="auth-tab-row">
-                    <a href="{{ url_for('auth.auth_page', tab='login') }}" class="auth-tab {{ 'active' if active_tab != 'register' else '' }}" style="text-align:center;">Login</a>
-                    <a href="{{ url_for('auth.auth_page', tab='register') }}" class="auth-tab {{ 'active' if active_tab == 'register' else '' }}" style="text-align:center;">Register</a>
+                    <a href="{{ url_for('auth.login', tab='login') }}" class="auth-tab {{ 'active' if active_tab != 'register' else '' }}" style="text-align:center;">Login</a>
+                    <a href="{{ url_for('auth.login', tab='register') }}" class="auth-tab {{ 'active' if active_tab == 'register' else '' }}" style="text-align:center;">Register</a>
                 </div>
 
                 {% if active_tab == 'register' %}
-                <form class="auth-form active" action="{{ url_for('auth.register') }}" method="post">
+                <form class="auth-form active" action="{{ url_for('auth.login', tab='register') }}" method="post">
+                    <input type="hidden" name="form_type" value="register" />
                     <h2>Register</h2>
                     <div class="auth-grid">
                         <div>
@@ -87,5 +88,5 @@
             </div>
         </div>
     </div>
-</body>
+</div>
 {% endblock %}

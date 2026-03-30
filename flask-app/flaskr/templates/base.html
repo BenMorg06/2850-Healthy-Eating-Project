@@ -8,7 +8,8 @@
 </head>
 
 <body>
-    <div class="app-shell">
+    <div class="app-shell {% if request.endpoint in ['auth.login', 'auth.logout', 'auth.register', 'auth.auth_page'] %}no-sidebar{% endif %}">
+        {% if request.endpoint not in ['auth.login', 'auth.logout', 'auth.register', 'auth.auth_page'] %}
         <aside class="sidebar">
             <div class="brand">
                 <div class="brand-mark">🍽</div>
@@ -36,6 +37,7 @@
                 <span>➕</span><span>Log Meal</span>
             </a>
         </aside>
+        {% endif %}
 
         <div class="main-area">
             <main class="page-wrap">

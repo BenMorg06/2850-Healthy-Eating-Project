@@ -30,8 +30,8 @@ class Subscriber(db.Model):
     pswd_hash = db.Column(db.String(128), nullable=False)
     sex = db.Column(db.String(10), nullable=False)
     date_of_birth = db.Column(db.Date, nullable=False)
-    height = db.Column(db.Float, nullable=False)
-    weight = db.Column(db.Float, nullable=False)
+    height = db.Column(db.Float, nullable=True)
+    weight = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     diary_id = db.Column(db.Integer, db.ForeignKey('food_diary.diary_id'), nullable=True)
 
@@ -47,7 +47,7 @@ class Subscriber(db.Model):
         return str(self.subscriber_id)
 
     @classmethod
-    def create_new_subscriber(cls, email, name, address, pswd_hash, sex, date_of_birth, height, weight):
+    def create_new_subscriber(cls, email, name, address, pswd_hash, sex, date_of_birth, height=None, weight=None):
         new_subscriber = cls(
             email=email,
             name=name,

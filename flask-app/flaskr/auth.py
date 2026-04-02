@@ -27,6 +27,7 @@ def login():
         # Check password hash
         if user and check_password_hash(user.pswd_hash, password):
             session['user_id'] = user.subscriber_id
+            flash('Login successful', 'success')
             return redirect(url_for('home'))
 
         flash('Invalid email or password')

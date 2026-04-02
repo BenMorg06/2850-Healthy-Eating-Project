@@ -58,7 +58,6 @@ class TestAuthRoutes:
         assert response.status_code == 200
 
     def test_login_get_with_register_tab(self, client):
-        """GET /login?tab=register should show register tab active."""
         response = client.get('/login?tab=register')
         assert response.status_code == 200
 
@@ -71,3 +70,55 @@ class TestAuthRoutes:
         response = logged_in_client.get('/auth')
         assert response.status_code == 302
         assert response.location.endswith('/')
+
+class TestLogin:
+    """Tests login functionality."""
+    
+    def test_login_with_valid_credentials(self, client):
+        response = client.post('/login', data={
+            'email': 'test@example.com',
+            'password': 'testpass123',
+            'form_type': 'login'
+        }, follow_redirects=True)
+        assert response.status_code == 200
+
+    def test_login_with_invalid_password(self, client):
+        response = client.post('/login', data={
+            'email': 'test@example.com',
+            'password': 'wrongpass',
+            'form_type': 'login'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Invalid email or password' in response.data
+
+    def test_valid_login_sets_session_id(self, client, subscriber):
+        response = client.post('/login', data={
+            'email': 'test@example.com',
+            'password': 'testpass123',
+            'form_type': 'login'
+        }, follow_redirects=False)
+
+        with client.session_transaction() as session:
+            assert 'user_id' in session
+            assert session['user_id'] is not None
+    
+    def test_login_with_invalid_email(self, client):
+        response = client.post('/login', data={
+            'email': 'nonexistent@example.com',
+            'password': 'testpass123',
+            'form_type': 'login'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Invalid email or password' in response.data
+
+    def test_login_with_missing_fields(self, client):
+        response = client.post('/login', data={
+            'email': '',
+            'password': '',
+            'form_type': 'login'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Invalid email or password' in response.data

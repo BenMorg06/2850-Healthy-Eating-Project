@@ -15,8 +15,8 @@ def login():
 
     if request.method == 'POST':
         if request.form.get('form_type') == 'register':
-            # handle register post (currently placeholder)
-            register()  # Call the register function to handle registration
+            # handle register post - prevent professional self-registration for now
+            return register()  # Call the register function to handle registration
 
         email = request.form.get('email')
         password = request.form.get('password')
@@ -51,6 +51,12 @@ def register():
     address = request.form.get('address')
     sex = request.form.get('sex')
     dob_str = request.form.get('date_of_birth')
+    is_professional = request.form.get('is_professional') == 'true'
+
+    # block self-service professional signup until workflow is implemented
+    if is_professional:
+        flash('Professional registration is not available via this form. Please contact support.', 'error')
+        return redirect(url_for('auth.auth_page', tab='register'))
 
     if not email or not password or not confirm_password or not address or not sex or not dob_str or not name:
         flash('All registration fields are required.', 'error')

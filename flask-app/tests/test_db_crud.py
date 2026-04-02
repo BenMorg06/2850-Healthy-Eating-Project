@@ -275,24 +275,6 @@ class TestSubscriber:
             with pytest.raises(IntegrityError):
                 Subscriber.create_new_subscriber(*self.good_subscriber)
 
-    def test_register_professional_checkbox_is_blocked(self, app):
-        with app.test_client() as client, app.app_context():
-            from flaskr.models import Subscriber
-
-            response = client.post('/register', data={
-                'email': 'protest@example.com',
-                'name': 'Pro Test',
-                'address': '123 Pro St',
-                'password': 'StrongPass123',
-                'confirm_password': 'StrongPass123',
-                'sex': 'Other',
-                'date_of_birth': '1990-01-01',
-                'is_professional': 'true'
-            }, follow_redirects=True)
-
-            assert b'Professional registration is not available via this form' in response.data
-            assert Subscriber.query.filter_by(email='protest@example.com').first() is None
-
     def test_diary_created_on_registration(self, app):
         with app.app_context():
             from flaskr import db

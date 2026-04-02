@@ -122,3 +122,139 @@ class TestLogin:
 
         assert response.status_code == 200
         assert b'Invalid email or password' in response.data
+
+class TestRegistration:
+    """Tests registration functionality."""
+    
+    def test_registration_with_valid_data(self, client):
+        response = client.post('/register', data={
+            'email': 'newuser@example.com',
+            'name': 'New User',
+            'address': '456 Ave',
+            'password': 'newpass456',
+            'confirm_password': 'newpass456',
+            'sex': 'Female',
+            'date_of_birth': '2000-01-01',
+            'height': 165.0,
+            'weight': 60.0
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+
+    def test_registration_with_missing_fields(self, client):
+        response = client.post('/register', data={
+            'email': '',
+            'name': '',
+            'address': '',
+            'password': '',
+            'confirm_password': '',
+            'sex': '',
+            'date_of_birth': '',
+            'height': '',
+            'weight': ''
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'error' in response.data
+
+    def test_registration_with_password_mismatch(self, client):
+        response = client.post('/register', data={
+            'email': 'newuser@example.com',
+            'name': 'New User',
+            'address': '456 Ave',
+            'password': 'newpass456',
+            'confirm_password': 'wrongpass456',
+            'sex': 'Female',
+            'date_of_birth': '2000-01-01',
+            'height': 165.0,
+            'weight': 60.0
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Passwords do not match.' in response.data
+
+    def test_registration_with_existing_email(self, client):
+        data = {
+            'email': 'test@example.com',
+            'name': 'Test User',
+            'address': '123 St',
+            'password': 'testpass123',
+            'confirm_password': 'testpass123',
+            'sex': 'Male',
+            'date_of_birth': '2000-01-01',
+            'height': 175.0,
+            'weight': 70.0
+        }
+
+        client.post('/register', data=data, follow_redirects=True)
+
+        response = client.post('/register', data=data, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Email already registered' in response.data
+        
+    def test_registration_with_invalid_dob_format(self, client):
+        response = client.post('/register', data={
+            'email': 'newuser@example.com',
+            'name': 'New User',
+            'address': '456 Ave',
+            'password': 'newpass456',
+            'confirm_password': 'newpass456',
+            'sex': 'Female',
+            'date_of_birth': 'invalid-date',
+            'height': 165.0,
+            'weight': 60.0
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Date of birth must be in YYYY-MM-DD format' in response.data
+
+    def test_registration_with_invalid_email_format(self, client):
+        response = client.post('/register', data={
+            'email': 'invalid-email',
+            'name': 'New User',
+            'address': '456 Ave',
+            'password': 'newpass456',
+            'confirm_password': 'newpass456',
+            'sex': 'Male',
+            'date_of_birth': '2000-01-01',
+            'height': 165.0,
+            'weight': 60.0
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Invalid email format' in response.data
+
+    def test_registration_with_professional_flag(self, client):
+        response = client.post('/register', data={
+            'email': 'newuser@example.com',
+            'name': 'New User',
+            'address': '456 Ave',
+            'password': 'newpass456',
+            'confirm_password': 'newpass456',
+            'sex': 'Male',
+            'date_of_birth': '2000-01-01',
+            'height': 165.0,
+            'weight': 60.0,
+            'professional': True
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'error' in response.data
+
+    def test_register_creates_diary_for_user(self, client, app):
+        response = client.post('/register', data={
+            'email': 'diarynewuser@example.com',
+            'name': 'Diary User',
+            'address': '777 Diary St',
+            'password': 'SecurePass123',
+            'confirm_password': 'SecurePass123',
+            'sex': 'Other',
+            'date_of_birth': '1994-02-28',
+            'form_type': 'register'
+        }, follow_redirects=False)
+        
+        with app.app_context():
+            user = Subscriber.query.filter_by(email='diarynewuser@example.com').first()
+            assert user is not None
+            assert user.diary_id is not None

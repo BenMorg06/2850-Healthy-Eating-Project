@@ -28,7 +28,7 @@ def subscriber(app):
             name='Test User',
             address='123 St',
             pswd_hash='hash',
-            sex='M',
+            sex='Male',
             date_of_birth=date(2000, 1, 1),
             height=175.0,
             weight=70.0

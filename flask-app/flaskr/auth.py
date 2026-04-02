@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
-from .models import Subscriber  # Assuming you have a User model in models.py
+from .models import Subscriber
+import re
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -52,8 +53,12 @@ def register():
     address = request.form.get('address')
     sex = request.form.get('sex')
     dob_str = request.form.get('date_of_birth')
-    is_professional = request.form.get('is_professional') == 'true'
+    is_professional = request.form.get('professional')
 
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        flash('Invalid email format', 'error')
+        return redirect(url_for('auth.auth_page', tab='register'))
+    
     # block self-service professional signup until workflow is implemented
     if is_professional:
         flash('Professional registration is not available via this form. Please contact support.', 'error')

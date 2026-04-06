@@ -120,3 +120,16 @@ class TestSearchResults:
         response = client.get(f'/meal/{meal_id}/search')
         assert response.status_code == 200
         assert response.get_json() == []
+
+class TestSearchRanking:
+    def test_first_word_boost(self, client, meal_id, food_db):
+        response = client.get(f'/meal/{meal_id}/search?q=Salmon')
+        data = response.get_json()
+        assert len(data) > 0
+        assert data[0]['food_name'].startswith('Salmon')
+
+    def test_all_words_boost(self, client, meal_id, food_db):
+        response = client.get(f'/meal/{meal_id}/search?q=Smoked Salmon')
+        data = response.get_json()
+        assert len(data) > 0
+        assert data[0]['food_name'].startswith('Salmon') and 'smoked' in data[0]['food_name']

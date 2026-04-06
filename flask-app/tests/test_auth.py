@@ -286,3 +286,33 @@ class TestLogout:
         response = client.get('/logout', follow_redirects=True)
         
         assert b'You have been logged out' in response.data
+
+class TestAuthAccessControl:
+    """Tests that protected routes require authentication."""
+    
+    def test_unauthenticated_access_to_diary_requires_login(self, client):
+        response = client.get('/diary', follow_redirects=False)
+        assert response.status_code == 302
+        assert '/login' in response.location
+
+    def test_unauthenticated_access_to_dashboard_requires_login(self, client):
+        response = client.get('/dashboard', follow_redirects=False)
+        assert response.status_code == 302
+        assert '/login' in response.location
+    
+    def test_unauthenticated_access_to_meal_requires_login(self, client):
+        response = client.get('/create_meal', follow_redirects=False)
+        assert response.status_code == 302
+        assert '/login' in response.location
+
+    def test_authenticated_access_to_diary_successful(self, logged_in_client):
+        response = logged_in_client.get('/diary', follow_redirects=False)
+        assert response.status_code == 200
+
+    def test_authenticated_access_to_dashboard_successful(self, logged_in_client):
+        response = logged_in_client.get('/dashboard', follow_redirects=False)
+        assert response.status_code == 200
+
+    def test_authenticated_access_to_meal_successful(self, logged_in_client):
+        response = logged_in_client.get('/create_meal', follow_redirects=False)
+        assert response.status_code == 302  # should redirect to edit page

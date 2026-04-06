@@ -59,3 +59,64 @@ def food_db(app):
         for f in foods:
             db.session.add(f)
         db.session.commit()
+
+class TestSearchResults:
+    def test_exact_match(self, client, meal_id, food_db):
+        response = client.get(f'/meal/{meal_id}/search?q=Salmon, smoked, hot-smoked')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data) > 0
+        assert data[0]['food_name'] == 'Salmon, smoked, hot-smoked'
+    
+    def test_partial_match_returns_results(self, client, meal_id, food_db):
+        response = client.get(f'/meal/{meal_id}/search?q=salm')
+        data = response.get_json()
+        assert any('Salmon' in r['food_name'] for r in data)
+    
+    def test_returns_correct_fields(self, client, meal_id, food_db):
+        response = client.get(f'/meal/{meal_id}/search?q=chicken')
+        data = response.get_json()
+ 
+        assert len(data) > 0
+        for result in data:
+            assert 'food_id'   in result
+            assert 'food_name' in result
+            assert 'kcal'      in result
+            assert 'protein'   in result
+            assert 'carbs'     in result
+            assert 'fats'      in result
+
+    def test_empty_query_returns_empty_list(self, client, meal_id):
+        response = client.get(f'/meal/{meal_id}/search?q=')
+        assert response.status_code == 200
+        assert response.get_json() == []
+
+    def test_no_match_returns_empty_list(self, client, meal_id, food_db):
+        response = client.get(f'/meal/{meal_id}/search?q=xyznonexistentfood')
+        assert response.status_code == 200
+        assert response.get_json() == []
+
+    # Fails as currently returns closet matches even if very poor
+    def test_no_match_with_space(self, client, meal_id, food_db):
+        response = client.get(f'/meal/{meal_id}/search?q=Nonexistent Food')
+        assert response.status_code == 200
+        assert response.get_json() == []
+
+    def test_case_insensitive_search(self, client, meal_id, food_db):
+        lower = client.get(f'/meal/{meal_id}/search?q=chicken').get_json()
+        upper = client.get(f'/meal/{meal_id}/search?q=CHICKEN').get_json()
+        mixed = client.get(f'/meal/{meal_id}/search?q=ChIcKeN').get_json()
+ 
+        assert [r['food_id'] for r in lower] == \
+               [r['food_id'] for r in upper] == \
+               [r['food_id'] for r in mixed]
+        
+    def test_whitespace_only_query_returns_empty_list(self, client, meal_id):
+        response = client.get(f'/meal/{meal_id}/search?q=   ')
+        assert response.status_code == 200
+        assert response.get_json() == []
+
+    def test_missing_query_param_returns_empty_list(self, client, meal_id):
+        response = client.get(f'/meal/{meal_id}/search')
+        assert response.status_code == 200
+        assert response.get_json() == []

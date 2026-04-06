@@ -94,7 +94,7 @@ def create_app(test_config=None):
             scored.append((food, final_score))
 
         scored.sort(key=lambda x: x[1], reverse=True)
-        top = [(food, score) for food, score in scored if score >= 40][:10]
+        top = [(food, score) for food, score in scored if score >= 60][:10]
 
         return jsonify([{
             'food_id':   food.food_id,

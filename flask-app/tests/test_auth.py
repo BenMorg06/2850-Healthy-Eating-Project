@@ -258,3 +258,31 @@ class TestRegistration:
             user = Subscriber.query.filter_by(email='diarynewuser@example.com').first()
             assert user is not None
             assert user.diary_id is not None
+
+class TestLogout:
+    """Tests logout functionality."""
+    
+    def test_logout_clears_session(self, logged_in_client):
+        response = logged_in_client.get('/logout', follow_redirects=False)
+        assert response.status_code == 302
+
+        with logged_in_client.session_transaction() as session:
+            assert 'user_id' not in session
+            assert '_fresh' not in session
+
+    def test_logout_redirects_to_login(self, client, subscriber):
+        with client.session_transaction() as sess:
+            sess['user_id'] = subscriber
+        
+        response = client.get('/logout', follow_redirects=False)
+        
+        assert response.status_code == 302
+        assert '/login' in response.location
+
+    def test_logout_shows_flash_message(self, client, subscriber):
+        with client.session_transaction() as sess:
+            sess['user_id'] = subscriber
+        
+        response = client.get('/logout', follow_redirects=True)
+        
+        assert b'You have been logged out' in response.data

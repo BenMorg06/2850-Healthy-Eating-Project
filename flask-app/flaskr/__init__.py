@@ -74,27 +74,27 @@ def create_app(test_config=None):
         for food in all_foods:
             name_lower = food.food_name.lower()
             
-            # First word of the food name e.g. "Salmon" from "Salmon, smoked, hot-smoked"
             first_word = name_lower.split(',')[0].split()[0]
 
             base_score = max(
                 fuzz.WRatio(query, name_lower),
                 fuzz.token_sort_ratio(query, name_lower),
                 fuzz.token_set_ratio(query, name_lower)
-            )
+            ) # base score based on overall fuzzy match of query to name
 
-            # Strong boost if any query word matches the first word of the food name
-            first_word_boost = 40 if any(w == first_word for w in query_words) else 0
+            first_word_boost = 40 if any(w == first_word for w in query_words) else 0 # boost score if word in search is first word of result
 
-            # Smaller boost if all query words appear anywhere in the name
-            word_matches = sum(1 for w in query_words if w in name_lower)
+            # add small boosts for any matching words
+            word_matches = sum(1 for w in query_words if w in name_lower) #
             word_boost = (word_matches / len(query_words)) * 15
 
+            # add base and all boosts for final score
             final_score = base_score + first_word_boost + word_boost
             scored.append((food, final_score))
 
+        # order by score 
         scored.sort(key=lambda x: x[1], reverse=True)
-        top = [(food, score) for food, score in scored if score >= 60][:10]
+        top = [(food, score) for food, score in scored if score >= 60][:10] # return first 10 results with score >=60
 
         return jsonify([{
             'food_id':   food.food_id,

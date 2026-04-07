@@ -8,7 +8,8 @@
 </head>
 
 <body>
-    <div class="app-shell">
+    <div class="app-shell {% if request.endpoint in ['auth.login', 'auth.logout', 'auth.register', 'auth.auth_page'] %}no-sidebar{% endif %}">
+        {% if request.endpoint not in ['auth.login', 'auth.logout', 'auth.register', 'auth.auth_page'] %}
         <aside class="sidebar">
             <div class="brand">
                 <div class="brand-mark">🍽</div>
@@ -35,7 +36,11 @@
             <a href="{{ url_for('create_meal') }}" class="side-btn quick-log-btn">
                 <span>➕</span><span>Log Meal</span>
             </a>
+            <a href="{{ url_for('auth.logout') }}" class="side-btn {% if active_page == 'logout' %}active{% endif %}">
+                <span>�</span><span>Logout</span>
+            </a>
         </aside>
+        {% endif %}
 
         <div class="main-area">
             <main class="page-wrap">

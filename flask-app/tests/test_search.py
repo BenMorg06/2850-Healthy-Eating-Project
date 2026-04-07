@@ -3,6 +3,7 @@ from flaskr import create_app
 from flaskr.extensions import db
 from flaskr.models import Food, Subscriber, Meal
 from datetime import date, datetime
+from werkzeug.security import generate_password_hash
 
 @pytest.fixture
 def app():
@@ -23,7 +24,7 @@ def client(app):
 def meal_id(app):
     with app.app_context():
         s = Subscriber.create_new_subscriber(
-            email='test@example.com', 
+            email='test@test.com', 
             name='Test User',
             address='123 St',
             pswd_hash='hash',
@@ -34,6 +35,34 @@ def meal_id(app):
         )
         meal = Meal.create_new_meal(s.diary_id, datetime.now())
         return meal.meal_id
+
+@pytest.fixture
+def subscriber(app):
+    with app.app_context():
+        password_hash = generate_password_hash('testpass123')
+        s = Subscriber.create_new_subscriber(
+            email='test@example.com',
+            name='Test User',
+            address='123 St',
+            pswd_hash=password_hash,
+            sex='Male',
+            date_of_birth=date(2000, 1, 1),
+            height=175.0,
+            weight=70.0
+        )
+        return s.subscriber_id
+
+
+@pytest.fixture
+def logged_in_client(client, subscriber, app):
+    with app.app_context():
+        s = db.session.get(Subscriber, subscriber)
+    
+    with client.session_transaction() as session:
+        session['user_id'] = subscriber   
+        session['_fresh'] = True
+    
+    return client
     
 @pytest.fixture
 def food_db(app):
@@ -61,20 +90,20 @@ def food_db(app):
         db.session.commit()
 
 class TestSearchResults:
-    def test_exact_match(self, client, meal_id, food_db):
-        response = client.get(f'/meal/{meal_id}/search?q=Salmon, smoked, hot-smoked')
+    def test_exact_match(self, logged_in_client, meal_id, food_db):
+        response = logged_in_client.get(f'/meal/{meal_id}/search?q=Salmon, smoked, hot-smoked')
         assert response.status_code == 200
         data = response.get_json()
         assert len(data) > 0
         assert data[0]['food_name'] == 'Salmon, smoked, hot-smoked'
     
-    def test_partial_match_returns_results(self, client, meal_id, food_db):
-        response = client.get(f'/meal/{meal_id}/search?q=salm')
+    def test_partial_match_returns_results(self, logged_in_client, meal_id, food_db):
+        response = logged_in_client.get(f'/meal/{meal_id}/search?q=salm')
         data = response.get_json()
         assert any('Salmon' in r['food_name'] for r in data)
     
-    def test_returns_correct_fields(self, client, meal_id, food_db):
-        response = client.get(f'/meal/{meal_id}/search?q=chicken')
+    def test_returns_correct_fields(self, logged_in_client, meal_id, food_db):
+        response = logged_in_client.get(f'/meal/{meal_id}/search?q=chicken')
         data = response.get_json()
  
         assert len(data) > 0
@@ -86,50 +115,50 @@ class TestSearchResults:
             assert 'carbs'     in result
             assert 'fats'      in result
 
-    def test_empty_query_returns_empty_list(self, client, meal_id):
-        response = client.get(f'/meal/{meal_id}/search?q=')
+    def test_empty_query_returns_empty_list(self, logged_in_client, meal_id):
+        response = logged_in_client.get(f'/meal/{meal_id}/search?q=')
         assert response.status_code == 200
         assert response.get_json() == []
 
-    def test_no_match_returns_empty_list(self, client, meal_id, food_db):
-        response = client.get(f'/meal/{meal_id}/search?q=xyznonexistentfood')
+    def test_no_match_returns_empty_list(self, logged_in_client, meal_id, food_db):
+        response = logged_in_client.get(f'/meal/{meal_id}/search?q=xyznonexistentfood')
         assert response.status_code == 200
         assert response.get_json() == []
 
     # Fails as currently returns closet matches even if very poor
-    def test_no_match_with_space(self, client, meal_id, food_db):
-        response = client.get(f'/meal/{meal_id}/search?q=Nonexistent Food')
+    def test_no_match_with_space(self, logged_in_client, meal_id, food_db):
+        response = logged_in_client.get(f'/meal/{meal_id}/search?q=Nonexistent Food')
         assert response.status_code == 200
         assert response.get_json() == []
 
-    def test_case_insensitive_search(self, client, meal_id, food_db):
-        lower = client.get(f'/meal/{meal_id}/search?q=chicken').get_json()
-        upper = client.get(f'/meal/{meal_id}/search?q=CHICKEN').get_json()
-        mixed = client.get(f'/meal/{meal_id}/search?q=ChIcKeN').get_json()
+    def test_case_insensitive_search(self, logged_in_client, meal_id, food_db):
+        lower = logged_in_client.get(f'/meal/{meal_id}/search?q=chicken').get_json()
+        upper = logged_in_client.get(f'/meal/{meal_id}/search?q=CHICKEN').get_json()
+        mixed = logged_in_client.get(f'/meal/{meal_id}/search?q=ChIcKeN').get_json()
  
         assert [r['food_id'] for r in lower] == \
                [r['food_id'] for r in upper] == \
                [r['food_id'] for r in mixed]
         
-    def test_whitespace_only_query_returns_empty_list(self, client, meal_id):
-        response = client.get(f'/meal/{meal_id}/search?q=   ')
+    def test_whitespace_only_query_returns_empty_list(self, logged_in_client, meal_id):
+        response = logged_in_client.get(f'/meal/{meal_id}/search?q=   ')
         assert response.status_code == 200
         assert response.get_json() == []
 
-    def test_missing_query_param_returns_empty_list(self, client, meal_id):
-        response = client.get(f'/meal/{meal_id}/search')
+    def test_missing_query_param_returns_empty_list(self, logged_in_client, meal_id):
+        response = logged_in_client.get(f'/meal/{meal_id}/search')
         assert response.status_code == 200
         assert response.get_json() == []
 
 class TestSearchRanking:
-    def test_first_word_boost(self, client, meal_id, food_db):
-        response = client.get(f'/meal/{meal_id}/search?q=Salmon')
+    def test_first_word_boost(self, logged_in_client, meal_id, food_db):
+        response = logged_in_client.get(f'/meal/{meal_id}/search?q=Salmon')
         data = response.get_json()
         assert len(data) > 0
         assert data[0]['food_name'].startswith('Salmon')
 
-    def test_all_words_boost(self, client, meal_id, food_db):
-        response = client.get(f'/meal/{meal_id}/search?q=Smoked Salmon')
+    def test_all_words_boost(self, logged_in_client, meal_id, food_db):
+        response = logged_in_client.get(f'/meal/{meal_id}/search?q=Smoked Salmon')
         data = response.get_json()
         assert len(data) > 0
         assert data[0]['food_name'].startswith('Salmon') and 'smoked' in data[0]['food_name']

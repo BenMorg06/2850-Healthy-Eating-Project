@@ -40,6 +40,7 @@ def create_app(test_config=None):
     def home():
         return render_template('base.html')
     
+    # esnure user is logged in to view homepage
     def get_current_subscriber():
         user_id = session.get('user_id')
         if not user_id:

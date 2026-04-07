@@ -29,10 +29,10 @@ def create_app(test_config=None):
 
     @app.before_request
     def check_login():
-        # 1. Define routes that DON'T require login (like the auth page and static files)
+        # define routes that don't require login
         allowed_routes = ['auth.login', 'auth.logout', 'auth.register', 'static'] 
         
-        # 2. If the user is not logged in and trying to access a protected page
+        # check if user is logged in, if the route they are accessign requires login then redirect to login page
         if 'user_id' not in session and request.endpoint not in allowed_routes:
             return redirect(url_for('auth.login'))
 
@@ -65,6 +65,7 @@ def create_app(test_config=None):
     
     @app.route('/create_meal', methods=['GET'])
     def create_meal():
+        # ensures user is logged in before creating meal
         subscriber = get_current_subscriber()
         if not subscriber:
             return redirect(url_for('auth.login'))

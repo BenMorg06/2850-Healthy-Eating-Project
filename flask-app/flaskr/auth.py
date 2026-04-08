@@ -127,7 +127,7 @@ def register():
         # logs new user in and redirects to home page
         session['user_id'] = new_user.subscriber_id
     flash('Registration successful, you are now logged in', 'success')
-    return redirect(url_for('home'))
+    return redirect(url_for('dashboard'))
 
 # logs user out by clearing session and redirecting to login page
 @auth_bp.route('/logout')

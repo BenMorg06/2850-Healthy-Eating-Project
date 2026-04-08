@@ -19,8 +19,7 @@
                     <p style="margin: 4px 0; color: var(--muted);">{{ client.address }}</p>
                     
                     <div class="card-action-row" style="margin-top: 12px;">
-                        <a href="{{ url_for('view_client_diary', client_id=client.subscriber_id) }}" class="tiny-blue small-btn">View Diary</a>
-                        <a href="{{ url_for('client_dashboard', client_id=client.subscriber_id) }}" class="ghost-btn small-btn">Dashboard</a>
+                        <a href="{{ url_for('diary', client_id=client.subscriber_id) }}" class="tiny-blue small-btn">View Diary</a>
                     </div>
                 </div>
             </div>

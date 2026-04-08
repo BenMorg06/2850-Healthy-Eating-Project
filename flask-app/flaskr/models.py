@@ -176,7 +176,7 @@ class Professional(db.Model):
     name = db.Column(db.String(120), nullable=False)
     address = db.Column(db.String(200), nullable=False)
     pswd_hash = db.Column(db.String(128), nullable=False)
-    profession = db.Column(db.String(120), nullable=False)
+    profession = db.Column(db.String(120), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
     # Define Professional relationships

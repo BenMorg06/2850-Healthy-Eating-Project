@@ -71,11 +71,6 @@ def register():
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         flash('Invalid email format', 'error')
         return redirect(url_for('auth.auth_page', tab='register'))
-    
-    # block professional signup until workflow is implemented
-    if is_professional:
-        flash('Professional registration is not available via this form. Please contact support.', 'error')
-        return redirect(url_for('auth.auth_page', tab='register'))
 
     # validate all fields are present 
     if not email or not password or not confirm_password or not address or not sex or not dob_str or not name:
@@ -103,20 +98,33 @@ def register():
     # hashes password for storage
     password_hash = generate_password_hash(password)
 
-    # creates new user in database
-    new_user = Subscriber.create_new_subscriber(
-        email=email,
-        name=name,
-        address=address,
-        pswd_hash=password_hash,
-        sex=sex,
-        date_of_birth=date_of_birth,
-        height = None,
-        weight = None
-    )
+    # block professional signup until workflow is implemented
+    if is_professional:
+        new_user = Professional.create_new_professional(
+            email=email,
+            name=name,
+            address=address,
+            pswd_hash=password_hash,
+            profession=None
+        )
+        session['user_id'] = new_user.professional_id
+        session['is_professional'] = True  # set a flag in the session to indicate user is professional
 
-    # logs new user in and redirects to home page
-    session['user_id'] = new_user.subscriber_id
+    else:
+        # creates new user in database
+        new_user = Subscriber.create_new_subscriber(
+            email=email,
+            name=name,
+            address=address,
+            pswd_hash=password_hash,
+            sex=sex,
+            date_of_birth=date_of_birth,
+            height = None,
+            weight = None
+        )
+
+        # logs new user in and redirects to home page
+        session['user_id'] = new_user.subscriber_id
     flash('Registration successful, you are now logged in', 'success')
     return redirect(url_for('home'))
 

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
-from .models import Subscriber
+from .models import Subscriber, Professional
 import re
 
 auth_bp = Blueprint('auth', __name__)
@@ -28,6 +28,16 @@ def login():
         # check password hash using library
         if user and check_password_hash(user.pswd_hash, password):
             session['user_id'] = user.subscriber_id
+            flash('Login successful', 'success')
+            return redirect(url_for('home')) # send logged in user to home page
+
+        # if not found in subscribers, check professionals (allows professionals to log in through same form)
+        if not user:
+            user = Professional.query.filter_by(email=email).first()
+        
+        if user and check_password_hash(user.pswd_hash, password):
+            session['user_id'] = user.professional_id
+            session['is_professional'] = True  # set a flag in the session to indicate this is a professional user
             flash('Login successful', 'success')
             return redirect(url_for('home')) # send logged in user to home page
 

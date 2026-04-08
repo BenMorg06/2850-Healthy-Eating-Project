@@ -38,7 +38,7 @@ def login():
         if user and check_password_hash(user.pswd_hash, password):
             session['user_id'] = user.professional_id
             session['is_professional'] = True  # set a flag in the session to indicate this is a professional user
-            flash('Login successful', 'success')
+            flash('Login successful as professional', 'success')
             return redirect(url_for('home')) # send logged in user to home page
 
         flash('Invalid email or password') # if login fails, show error and stay on login page
@@ -65,7 +65,7 @@ def register():
     address = request.form.get('address')
     sex = request.form.get('sex')
     dob_str = request.form.get('date_of_birth')
-    is_professional = request.form.get('professional')
+    is_professional = request.form.get('is_professional') == 'true'
 
     # email is correct format
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
@@ -99,6 +99,7 @@ def register():
     password_hash = generate_password_hash(password)
 
     # block professional signup until workflow is implemented
+    print(is_professional)
     if is_professional:
         new_user = Professional.create_new_professional(
             email=email,

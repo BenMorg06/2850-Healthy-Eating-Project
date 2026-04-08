@@ -185,7 +185,7 @@ class Professional(db.Model):
 
     # CRUD methods for Professional
     @classmethod
-    def create_new_professional(cls, email, name, address, pswd_hash, profession):
+    def create_new_professional(cls, email, name, address, pswd_hash, profession=None):
         new_professional = cls(
             email=email,
             name=name,

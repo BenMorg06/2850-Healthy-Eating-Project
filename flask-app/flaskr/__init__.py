@@ -184,4 +184,9 @@ def create_app(test_config=None):
             kcal_pct=kcal_pct
         )   
 
+
+    @app.route('/professional_dashboard')
+    def professional_dashboard():
+        return render_template('professional_dashboard.html', active_page='professional')
+
     return app

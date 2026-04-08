@@ -3,7 +3,7 @@ import os
 from flask import Flask, abort, app, jsonify, render_template, request, session, redirect, url_for, flash
 from rapidfuzz import process, fuzz
 from flaskr.extensions import db
-from flaskr.models import Comment, Food, MealItem, Subscriber, Meal
+from flaskr.models import Comment, Food, MealItem, Subscriber, Meal, Professional, Manages
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -187,6 +187,99 @@ def create_app(test_config=None):
 
     @app.route('/professional_dashboard')
     def professional_dashboard():
-        return render_template('professional_dashboard.html', active_page='professional')
+        # Get current professional
+        professional_id = session.get('user_id')
+        professional = db.session.get(Professional, professional_id)
+        
+        # Get managed clients (subscribers managed by this professional)
+        managed_clients = db.session.query(Subscriber).join(Manages).filter(
+            Manages.professional_id == professional.professional_id
+        ).all()
+        
+        return render_template('professional_dashboard.html', 
+                             active_page='professional',
+                             clients=managed_clients)
+
+    @app.route('/invite_client', methods=['GET', 'POST'])
+    def invite_client():
+        # Check if user is logged in and is a professional
+        if not session.get('user_id') or not session.get('is_professional'):
+            flash('Access denied. Professional account required.', 'error')
+            return redirect(url_for('dashboard'))
+        
+        if request.method == 'POST':
+            client_email = request.form.get('client_email')
+            existing_client = Subscriber.query.filter_by(email=client_email).first()
+            if existing_client:
+                Manages.create_management_relationship(professional_id=session['user_id'], subscriber_id=existing_client.subscriber_id)
+                flash('This subscriber is now linked to your profile.', 'success')
+                return redirect(url_for('professional_dashboard'))
+            
+            flash(f'No subscriber found with email {client_email}.', 'error')
+            return redirect(url_for('invite_client'))
+        
+        return render_template('invite_client.html', active_page='professional')
+
+    @app.route('/client/<int:client_id>/diary')
+    def view_client_diary(client_id):
+        # Check if user is logged in and is a professional
+        if not session.get('user_id') or not session.get('is_professional'):
+            flash('Access denied. Professional account required.', 'error')
+            return redirect(url_for('professional_dashboard'))
+        
+        # Verify this professional manages this client
+        professional_id = session.get('user_id')
+        manages_relationship = Manages.query.filter_by(
+            professional_id=professional_id, 
+            subscriber_id=client_id
+        ).first()
+        
+        if not manages_relationship:
+            flash('Access denied. You do not manage this client.', 'error')
+            return redirect(url_for('professional_dashboard'))
+        
+        # Get client and their meals
+        client = db.session.get(Subscriber, client_id)
+        if not client:
+            abort(404)
+        
+        all_meals = db.session.query(Meal).filter_by(diary_id=client.diary_id)\
+                .order_by(Meal.meal_time.desc())\
+                .all()
+        meals = [m for m in all_meals if len(m.items) > 0]
+        
+        return render_template('diary.html', 
+                             active_page='professional', 
+                             meals=meals,
+                             client=client,
+                             is_professional_view=True)
+    
+    @app.route('/client/<int:client_id>/dashboard')
+    def client_dashboard(client_id):
+        # Check if user is logged in and is a professional
+        if not session.get('user_id') or not session.get('is_professional'):
+            flash('Access denied. Professional account required.', 'error')
+            return redirect(url_for('professional_dashboard'))
+        
+        # Verify this professional manages this client
+        professional_id = session.get('user_id')
+        manages_relationship = Manages.query.filter_by(
+            professional_id=professional_id, 
+            subscriber_id=client_id
+        ).first()
+        
+        if not manages_relationship:
+            flash('Access denied. You do not manage this client.', 'error')
+            return redirect(url_for('professional_dashboard'))
+        
+        # Get client info
+        client = db.session.get(Subscriber, client_id)
+        if not client:
+            abort(404)
+        
+        return render_template('client_dashboard.html', 
+                             active_page='professional', 
+                             client=client,
+                             current_date=datetime.now().date())
 
     return app

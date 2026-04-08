@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Invite Client - Professional Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <div class="page-heading">
+        <h1>Invite a New Client</h1>
+        <a href="{{ url_for('professional_dashboard') }}" class="ghost-btn">← Back to Dashboard</a>
+    </div>
+
+    <div class="card" style="max-width: 600px; margin: 0 auto;">
+        <p style="margin-bottom: 20px; color: var(--muted);">Send an invitation to a potential client by email. Once they accept, they'll be added to your client list.</p>
+
+        <form action="{{ url_for('invite_client') }}" method="post" style="max-width: 400px;">
+            <label for="client_email">Client Email Address</label>
+            <input type="email" id="client_email" name="client_email" 
+                   placeholder="Enter client's email address" required>
+            <div class="helper-text">The client will receive an invitation email with instructions to join your professional network.</div>
+            
+            <div class="action-row" style="margin-top: 20px;">
+                <button type="submit" class="tiny-blue big-btn">Send Invitation</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card" style="max-width: 600px; margin: 20px auto 0;">
+        <h3 style="margin-top: 0;">What happens next?</h3>
+        <ol style="margin: 10px 0; padding-left: 20px; line-height: 1.6;">
+            <li>The client receives an email invitation</li>
+            <li>They click the link to register for the Healthy Dietary System</li>
+            <li>During registration, they're automatically linked to you as their professional</li>
+            <li>You can then view their diary and provide dietary guidance</li>
+        </ol>
+    </div>
+</div>
+
+{% endblock %}

@@ -20,10 +20,16 @@
             </div>
 
             <div class="side-divider"></div>
-
+            {% if not session.get('is_professional') %}
             <a href="{{ url_for('dashboard') }}" class="side-btn {% if active_page == 'dashboard' %}active{% endif %}">
                 <span>🏠</span><span>Dashboard</span>
             </a>
+            {% endif %}
+            {% if session.get('is_professional') %}
+            <a href="{{ url_for('professional_dashboard') }}" class="side-btn {% if active_page == 'professional' %}active{% endif %}">
+                <span>👨‍⚕️</span><span>Professional</span>
+            </a>
+            {% endif %}
             <button class="side-btn" data-page="menu">
                 <span>📋</span><span>Menu</span>
             </button>
@@ -36,11 +42,6 @@
             <a href="{{ url_for('create_meal') }}" class="side-btn quick-log-btn">
                 <span>➕</span><span>Log Meal</span>
             </a>
-            {% if session.get('is_professional') %}
-            <a href="{{ url_for('professional_dashboard') }}" class="side-btn {% if active_page == 'professional' %}active{% endif %}">
-                <span>👨‍⚕️</span><span>Professional</span>
-            </a>
-            {% endif %}
             <a href="{{ url_for('auth.logout') }}" class="side-btn {% if active_page == 'logout' %}active{% endif %}">
                 <span>↤</span><span>Logout</span>
             </a>

@@ -3,6 +3,36 @@
 {% block title %}Professional Dashboard – Healthy Dietary System{% endblock %}
 
 {% block content %}
-    <h1>Professional Dashboard</h1>
-    <p>Welcome to your professional dashboard!</p>
+<div class="page-wrap">
+    <div class="page-heading">
+        <h1>Professional Dashboard</h1>
+        <a href="{{ url_for('invite_client') }}" class="tiny-blue big-btn">➕Add Client</a>
+    </div>
+
+    {% if clients %}
+        <div class="menu-grid" style="margin-top: 20px;">
+            {% for client in clients %}
+            <div class="menu-card">
+                <div style="padding: 16px;">
+                    <h4>{{ client.name }}</h4>
+                    <p style="margin: 4px 0; color: var(--muted);">{{ client.email }}</p>
+                    <p style="margin: 4px 0; color: var(--muted);">{{ client.address }}</p>
+                    
+                    <div class="card-action-row" style="margin-top: 12px;">
+                        <a href="{{ url_for('view_client_diary', client_id=client.subscriber_id) }}" class="tiny-blue small-btn">View Diary</a>
+                        <a href="{{ url_for('client_dashboard', client_id=client.subscriber_id) }}" class="ghost-btn small-btn">Dashboard</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card" style="text-align: center; padding: 40px;">
+            <h3 style="margin-bottom: 10px;">No Clients Yet</h3>
+            <p style="color: var(--muted); margin-bottom: 20px;">You haven't added any clients to your professional network yet.</p>
+            <a href="{{ url_for('invite_client') }}" class="tiny-blue big-btn">Add Your First Client</a>
+        </div>
+    {% endif %}
+</div>
+
 {% endblock %}

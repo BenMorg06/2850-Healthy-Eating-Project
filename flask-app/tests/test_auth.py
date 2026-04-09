@@ -1,6 +1,6 @@
 from flaskr.extensions import db
 from flaskr import create_app
-from flaskr.models import Subscriber, Meal, MealItem, Food
+from flaskr.models import Subscriber, Meal, MealItem, Food, Professional
 from datetime import date, datetime
 import pytest
 from werkzeug.security import generate_password_hash
@@ -225,7 +225,7 @@ class TestRegistration:
         assert response.status_code == 200
         assert b'Invalid email format' in response.data
 
-    def test_registration_with_professional_flag(self, client):
+    def test_registration_with_professional_flag(self, client, app):
         response = client.post('/register', data={
             'email': 'newuser@example.com',
             'name': 'New User',
@@ -234,13 +234,13 @@ class TestRegistration:
             'confirm_password': 'newpass456',
             'sex': 'Male',
             'date_of_birth': '2000-01-01',
-            'height': 165.0,
-            'weight': 60.0,
-            'professional': True
+            'is_professional': 'true'
         }, follow_redirects=True)
 
         assert response.status_code == 200
-        assert b'error' in response.data
+        with app.app_context():
+            pro = Professional.query.filter_by(email='newuser@example.com').first()
+            assert pro is not None
 
     def test_register_creates_diary_for_user(self, client, app):
         response = client.post('/register', data={
@@ -316,3 +316,27 @@ class TestAuthAccessControl:
     def test_authenticated_access_to_meal_successful(self, logged_in_client):
         response = logged_in_client.get('/create_meal', follow_redirects=False)
         assert response.status_code == 302  # should redirect to edit page
+    
+    def test_unauthenticated_access_to_professional_dashboard_requires_login(self, client):
+        response = client.get('/professional_dashboard', follow_redirects=False)
+        assert response.status_code == 302
+        assert '/login' in response.location
+
+    def test_professional_can_access_professional_dashboard(self, client, app):
+        with client.session_transaction() as sess:
+            sess['user_id'] = 1
+            sess['is_professional'] = True
+        response = client.get('/professional_dashboard', follow_redirects=False)
+        assert response.status_code == 200
+
+    def test_non_professional_cannot_access_invite_client(self, logged_in_client):
+        response = logged_in_client.get('/invite_client', follow_redirects=False)
+        assert response.status_code == 302
+
+    def test_professional_dashboard_redirects_from_home(self, client):
+        with client.session_transaction() as sess:
+            sess['user_id'] = 1
+            sess['is_professional'] = True
+        response = client.get('/', follow_redirects=False)
+        assert response.status_code == 302
+        assert 'professional_dashboard' in response.location

@@ -63,7 +63,7 @@ def create_app(test_config=None):
     @app.route('/dashboard')
     def dashboard():
         if session.get('is_professional'):
-            return professional_dashboard()
+            return redirect(url_for('professional_dashboard'))
         return render_template('dashboard.html')
     
     @app.route('/create_meal', methods=['GET'])
@@ -189,6 +189,9 @@ def create_app(test_config=None):
 
     @app.route('/professional_dashboard')
     def professional_dashboard():
+        if not session.get('is_professional'):
+            flash('Access denied. Professional account required.', 'error')
+            return redirect(url_for('dashboard'))
         if session.get('is_professional'):
             professional_id = session.get('user_id')
         

@@ -1,6 +1,6 @@
 from flaskr.extensions import db
 from flaskr import create_app
-from flaskr.models import Subscriber, Meal, MealItem, Food, Professional
+from flaskr.models import Subscriber, Meal, MealItem, Food, Professional, Manages
 from datetime import date, datetime
 import pytest
 from werkzeug.security import generate_password_hash

@@ -50,6 +50,26 @@ def logged_in_client(client, subscriber, app):
     
     return client
 
+@pytest.fixture
+def professional(app):
+    with app.app_context():
+        password_hash = generate_password_hash('propass123')
+        p = Professional.create_new_professional(
+            email='pro@example.com',
+            name='Test Professional',
+            address='456 Pro St',
+            pswd_hash=password_hash,
+            profession=None
+        )
+        return p.professional_id
+    
+@pytest.fixture
+def logged_in_professional(client, professional):
+    with client.session_transaction() as sess:
+        sess['user_id'] = professional
+        sess['is_professional'] = True
+    return client
+
 class TestAuthRoutes:
     """Tests route access and basic functionality."""
     
@@ -74,13 +94,41 @@ class TestAuthRoutes:
 class TestLogin:
     """Tests login functionality."""
     
-    def test_login_with_valid_credentials(self, client):
+    @pytest.mark.parametrize('user', [
+        {'email': 'test@example.com',
+         'password': 'testpass123',
+         'form_type': 'login'},
+        {'email': 'pro@example.com',
+         'password': 'propass123',
+         'form_type': 'login'}])
+    def test_login_with_valid_credentials(self, client, user):
         response = client.post('/login', data={
+            'email': user['email'],
+            'password': user['password'],
+            'form_type': user['form_type']
+        }, follow_redirects=True)
+        assert response.status_code == 200
+
+    def test_professional_login_sets_session_flags(self, client, professional):
+        client.post('/login', data={
+            'email': 'pro@example.com',
+            'password': 'propass123',
+            'form_type': 'login'
+        }, follow_redirects=False)
+
+        with client.session_transaction() as sess:
+            assert sess['user_id'] == professional
+            assert sess['is_professional'] == True
+
+    def test_subscriber_login_does_not_set_professional_flag(self, client, subscriber):
+        client.post('/login', data={
             'email': 'test@example.com',
             'password': 'testpass123',
             'form_type': 'login'
-        }, follow_redirects=True)
-        assert response.status_code == 200
+        }, follow_redirects=False)
+
+        with client.session_transaction() as sess:
+            assert sess.get('is_professional') is None
 
     def test_login_with_invalid_password(self, client):
         response = client.post('/login', data={

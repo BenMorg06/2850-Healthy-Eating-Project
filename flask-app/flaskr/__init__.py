@@ -77,11 +77,18 @@ def create_app(test_config=None):
     @app.route('/meal/<int:meal_id>/edit')
     def edit_meal(meal_id):
         meal = db.session.get(Meal, meal_id) or abort(404)
+        subscriber = get_current_subscriber()
+        if not subscriber or meal.diary_id != subscriber.diary_id:
+            abort(403)
         items = MealItem.get_by_meal(meal_id)
         return render_template('create_meal.html', active_page='diary', meal=meal, items=items)
 
     @app.route('/meal/<int:meal_id>/search', methods=['GET'])
     def search_food(meal_id):
+        meal = db.session.get(Meal, meal_id) or abort(404)
+        subscriber = get_current_subscriber()
+        if not subscriber or meal.diary_id != subscriber.diary_id:
+            abort(403)
         query = request.args.get('q', '').strip().lower()
         if not query:
             return jsonify([])
@@ -127,6 +134,10 @@ def create_app(test_config=None):
 
     @app.route('/meal/<int:meal_id>/add_item', methods=['POST'])
     def add_meal_item(meal_id):
+        meal = db.session.get(Meal, meal_id) or abort(404)
+        subscriber = get_current_subscriber()
+        if not subscriber or meal.diary_id != subscriber.diary_id:
+            abort(403)
         food_id = request.form.get('food_id')
         weight = request.form.get('weight', type=float)
         if not food_id or weight <= 0:
@@ -137,6 +148,10 @@ def create_app(test_config=None):
     
     @app.route('/meal/<int:meal_id>/remove_item/<int:item_id>', methods=['POST'])
     def remove_meal_item(meal_id, item_id):
+        meal = db.session.get(Meal, meal_id) or abort(404)
+        subscriber = get_current_subscriber()
+        if not subscriber or meal.diary_id != subscriber.diary_id:
+            abort(403)
         meal_item = db.session.get(MealItem, item_id) or abort(404)
         if meal_item.meal_id != meal_id:
             return jsonify({'error': 'Item does not belong to this meal'}), 400
@@ -147,6 +162,10 @@ def create_app(test_config=None):
     
     @app.route('/meal/<int:meal_id>/finish', methods=['POST'])
     def finish_meal(meal_id):
+        meal = db.session.get(Meal, meal_id) or abort(404)
+        subscriber = get_current_subscriber()
+        if not subscriber or meal.diary_id != subscriber.diary_id:
+            abort(403)
         flash ('Meal saved successfully!', 'success')
         return redirect(url_for('diary'))
     
@@ -157,9 +176,23 @@ def create_app(test_config=None):
         db.session.commit()
         return redirect(url_for('diary'))
     
+    @app.route('/meal/<int:meal_id>/delete', methods=['POST'])
+    def delete_meal(meal_id):
+        meal = db.session.get(Meal, meal_id) or abort(404)
+        # Ensure the meal belongs to the current subscriber
+        subscriber = get_current_subscriber()
+        if not subscriber or meal.diary_id != subscriber.diary_id:
+            abort(403)
+        meal.delete_meal()
+        flash('Meal deleted successfully!', 'success')
+        return redirect(url_for('diary'))
+    
     @app.route('/meal/<int:meal_id>/view')
     def view_meal(meal_id):
         meal = db.session.get(Meal, meal_id) or abort(404)
+        subscriber = get_current_subscriber()
+        if not subscriber or meal.diary_id != subscriber.diary_id:
+            abort(403)
         items = MealItem.get_by_meal(meal_id)
         comments = Comment.get_by_meal(meal_id)
         

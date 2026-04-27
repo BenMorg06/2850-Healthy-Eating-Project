@@ -22,18 +22,17 @@ def client(app):
 
 @pytest.fixture
 def subscriber(app):
-    with app.app_context():
-        s = Subscriber.create_new_subscriber(
-            email='test@test.com', 
-            name='Test User',
-            address='123 St',
-            pswd_hash='hash',
-            sex='Male',
-            date_of_birth=date(2000, 1, 1),
-            height=175.0,
-            weight=70.0
-        )
-        return s.subscriber_id
+    s = Subscriber.create_new_subscriber(
+        email='test@test.com', 
+        name='Test User',
+        address='123 St',
+        pswd_hash='hash',
+        sex='Male',
+        date_of_birth=date(2000, 1, 1),
+        height=175.0,
+        weight=70.0
+    )
+    return s.subscriber_id
     
 @pytest.fixture
 def logged_in_client(client, subscriber, app):
@@ -93,14 +92,17 @@ def test_meal_view_loads(app, logged_in_client, subscriber):
     response = logged_in_client.get(f'/meal/{meal_id}/view')
     assert response.status_code == 200
 
-def test_search_food_returns_results(app, logged_in_client):
+def test_search_food_returns_results(app, logged_in_client, subscriber):
     with app.app_context():
+        s = db.session.get(Subscriber, subscriber)
+        meal = Meal.create_new_meal(s.diary_id, datetime.now())
+        meal_id = meal.meal_id
         food = Food(food_id = 'F001',food_name='Test Food', kcal=100, kj =100, carbs = 20, protein=10, fats=5, sugar=0, fibre=0)
         db.session.add(food)
         db.session.commit()
         food_id = food.food_id
 
-    response = logged_in_client.get('/meal/1/search?q=Test')
+    response = logged_in_client.get(f'/meal/{meal_id}/search?q=Test')
     assert response.status_code == 200
     data = response.get_json()
     assert len(data) == 1
@@ -143,8 +145,13 @@ def test_remove_meal_item(app, logged_in_client, subscriber):
         items = MealItem.get_by_meal(meal_id)
         assert len(items) == 0  # item was removed
 
-def test_search_food_no_results(app, logged_in_client):
-    response = logged_in_client.get('/meal/1/search?q=NonExistentFood')
+def test_search_food_no_results(app, logged_in_client, subscriber):
+    with app.app_context():
+        s = db.session.get(Subscriber, subscriber)
+        meal = Meal.create_new_meal(s.diary_id, datetime.now())
+        meal_id = meal.meal_id
+
+    response = logged_in_client.get(f'/meal/{meal_id}/search?q=NonExistentFood')
     assert response.status_code == 200
     data = response.get_json()
     assert len(data) == 0
@@ -152,3 +159,27 @@ def test_search_food_no_results(app, logged_in_client):
 def test_cancel_nonexistent_meal(app, logged_in_client):
     response = logged_in_client.post('/meal/999/cancel')
     assert response.status_code == 404
+
+def test_edit_meal_loads(app, logged_in_client, subscriber):
+    with app.app_context():
+        s = db.session.get(Subscriber, subscriber)
+        meal = Meal.create_new_meal(s.diary_id, datetime.now())
+        meal_id = meal.meal_id
+
+    response = logged_in_client.get(f'/meal/{meal_id}/edit')
+    assert response.status_code == 200
+
+def test_delete_meal(app, logged_in_client, subscriber):
+    with app.app_context():
+        s = db.session.get(Subscriber, subscriber)
+        meal = Meal.create_new_meal(s.diary_id, datetime.now())
+        meal_id = meal.meal_id
+
+    with logged_in_client.session_transaction() as session:
+        session['_flashes'] = []  # clear flashes
+
+    response = logged_in_client.post(f'/meal/{meal_id}/delete')
+    assert response.status_code == 302
+
+    with app.app_context():
+        assert db.session.get(Meal, meal_id) is None  # meal was deleted

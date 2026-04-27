@@ -3,7 +3,7 @@ import os
 from flask import Flask, abort, app, jsonify, render_template, request, session, redirect, url_for, flash
 from rapidfuzz import process, fuzz
 from flaskr.extensions import db
-from flaskr.models import Comment, Food, MealItem, Subscriber, Meal
+from flaskr.models import Comment, Food, MealItem, Subscriber, Meal, Professional, Manages
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -39,7 +39,7 @@ def create_app(test_config=None):
 
     @app.route('/')
     def home():
-        return render_template('base.html')
+        return dashboard()
     
     # esnure user is logged in to view homepage
     def get_current_subscriber():
@@ -50,9 +50,27 @@ def create_app(test_config=None):
 
     @app.route('/diary')
     def diary():
-        subscriber = get_current_subscriber()
-        if not subscriber:
-            return redirect(url_for('auth.login'))
+        client_id = request.args.get('client_id', type=int)
+
+        if client_id is not None:
+            if not session.get('is_professional'):
+                abort(403)
+
+            professional_id = session.get('user_id')
+            relationship = Manages.query.filter_by(
+                professional_id=professional_id,
+                subscriber_id=client_id
+            ).first()
+            if not relationship:
+                abort(403)
+
+            subscriber = db.session.get(Subscriber, client_id)
+            if not subscriber:
+                abort(404)
+        else:
+            subscriber = get_current_subscriber()
+            if not subscriber:
+                return redirect(url_for('auth.login'))
 
         all_meals = db.session.query(Meal).filter_by(diary_id=subscriber.diary_id)\
                 .order_by(Meal.meal_time.desc())\
@@ -62,6 +80,8 @@ def create_app(test_config=None):
     
     @app.route('/dashboard')
     def dashboard():
+        if session.get('is_professional'):
+            return redirect(url_for('professional_dashboard'))
         return render_template('dashboard.html')
     
     @app.route('/create_meal', methods=['GET'])
@@ -216,5 +236,39 @@ def create_app(test_config=None):
             daily_goal=daily_goal,
             kcal_pct=kcal_pct
         )   
+
+
+    @app.route('/professional_dashboard')
+    def professional_dashboard():
+        if not session.get('is_professional'):
+            flash('Access denied. Professional account required.', 'error')
+            return redirect(url_for('dashboard'))
+        if session.get('is_professional'):
+            professional_id = session.get('user_id')
+        
+        managed_relationships = Manages.query.filter_by(professional_id=professional_id).all()
+        clients = [db.session.get(Subscriber, rel.subscriber_id) for rel in managed_relationships]
+        
+        return render_template('professional_dashboard.html', active_page='professional',clients=clients)
+
+    @app.route('/invite_client', methods=['GET', 'POST'])
+    def invite_client():
+        # Check if user is logged in and is a professional
+        if not session.get('user_id') or not session.get('is_professional'):
+            flash('Access denied. Professional account required.', 'error')
+            return redirect(url_for('dashboard'))
+        
+        if request.method == 'POST':
+            client_email = request.form.get('client_email')
+            existing_client = Subscriber.query.filter_by(email=client_email).first()
+            if existing_client:
+                Manages.create_management_relationship(professional_id=session['user_id'], subscriber_id=existing_client.subscriber_id)
+                flash('This subscriber is now linked to your profile.', 'success')
+                return redirect(url_for('professional_dashboard'))
+            
+            flash(f'No subscriber found with email {client_email}.', 'error')
+            return redirect(url_for('invite_client'))
+        
+        return render_template('invite_client.html', active_page='professional')
 
     return app

@@ -1,6 +1,6 @@
 from flaskr.extensions import db
 from flaskr import create_app
-from flaskr.models import Subscriber, Meal, MealItem, Food
+from flaskr.models import Subscriber, Meal, MealItem, Food, Professional, Manages
 from datetime import date, datetime
 import pytest
 from werkzeug.security import generate_password_hash
@@ -50,6 +50,26 @@ def logged_in_client(client, subscriber, app):
     
     return client
 
+@pytest.fixture
+def professional(app):
+    with app.app_context():
+        password_hash = generate_password_hash('propass123')
+        p = Professional.create_new_professional(
+            email='pro@example.com',
+            name='Test Professional',
+            address='456 Pro St',
+            pswd_hash=password_hash,
+            profession=None
+        )
+        return p.professional_id
+    
+@pytest.fixture
+def logged_in_professional(client, professional):
+    with client.session_transaction() as sess:
+        sess['user_id'] = professional
+        sess['is_professional'] = True
+    return client
+
 class TestAuthRoutes:
     """Tests route access and basic functionality."""
     
@@ -74,13 +94,41 @@ class TestAuthRoutes:
 class TestLogin:
     """Tests login functionality."""
     
-    def test_login_with_valid_credentials(self, client):
+    @pytest.mark.parametrize('user', [
+        {'email': 'test@example.com',
+         'password': 'testpass123',
+         'form_type': 'login'},
+        {'email': 'pro@example.com',
+         'password': 'propass123',
+         'form_type': 'login'}])
+    def test_login_with_valid_credentials(self, client, user):
         response = client.post('/login', data={
+            'email': user['email'],
+            'password': user['password'],
+            'form_type': user['form_type']
+        }, follow_redirects=True)
+        assert response.status_code == 200
+
+    def test_professional_login_sets_session_flags(self, client, professional):
+        client.post('/login', data={
+            'email': 'pro@example.com',
+            'password': 'propass123',
+            'form_type': 'login'
+        }, follow_redirects=False)
+
+        with client.session_transaction() as sess:
+            assert sess['user_id'] == professional
+            assert sess['is_professional'] == True
+
+    def test_subscriber_login_does_not_set_professional_flag(self, client, subscriber):
+        client.post('/login', data={
             'email': 'test@example.com',
             'password': 'testpass123',
             'form_type': 'login'
-        }, follow_redirects=True)
-        assert response.status_code == 200
+        }, follow_redirects=False)
+
+        with client.session_transaction() as sess:
+            assert sess.get('is_professional') is None
 
     def test_login_with_invalid_password(self, client):
         response = client.post('/login', data={
@@ -225,7 +273,7 @@ class TestRegistration:
         assert response.status_code == 200
         assert b'Invalid email format' in response.data
 
-    def test_registration_with_professional_flag(self, client):
+    def test_registration_with_professional_flag(self, client, app):
         response = client.post('/register', data={
             'email': 'newuser@example.com',
             'name': 'New User',
@@ -234,13 +282,13 @@ class TestRegistration:
             'confirm_password': 'newpass456',
             'sex': 'Male',
             'date_of_birth': '2000-01-01',
-            'height': 165.0,
-            'weight': 60.0,
-            'professional': True
+            'is_professional': 'true'
         }, follow_redirects=True)
 
         assert response.status_code == 200
-        assert b'error' in response.data
+        with app.app_context():
+            pro = Professional.query.filter_by(email='newuser@example.com').first()
+            assert pro is not None
 
     def test_register_creates_diary_for_user(self, client, app):
         response = client.post('/register', data={
@@ -316,3 +364,27 @@ class TestAuthAccessControl:
     def test_authenticated_access_to_meal_successful(self, logged_in_client):
         response = logged_in_client.get('/create_meal', follow_redirects=False)
         assert response.status_code == 302  # should redirect to edit page
+    
+    def test_unauthenticated_access_to_professional_dashboard_requires_login(self, client):
+        response = client.get('/professional_dashboard', follow_redirects=False)
+        assert response.status_code == 302
+        assert '/login' in response.location
+
+    def test_professional_can_access_professional_dashboard(self, client, app):
+        with client.session_transaction() as sess:
+            sess['user_id'] = 1
+            sess['is_professional'] = True
+        response = client.get('/professional_dashboard', follow_redirects=False)
+        assert response.status_code == 200
+
+    def test_non_professional_cannot_access_invite_client(self, logged_in_client):
+        response = logged_in_client.get('/invite_client', follow_redirects=False)
+        assert response.status_code == 302
+
+    def test_professional_dashboard_redirects_from_home(self, client):
+        with client.session_transaction() as sess:
+            sess['user_id'] = 1
+            sess['is_professional'] = True
+        response = client.get('/', follow_redirects=False)
+        assert response.status_code == 302
+        assert 'professional_dashboard' in response.location

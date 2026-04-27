@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
-from .models import Subscriber
+from .models import Subscriber, Professional
 import re
 
 auth_bp = Blueprint('auth', __name__)
@@ -31,6 +31,16 @@ def login():
             flash('Login successful', 'success')
             return redirect(url_for('home')) # send logged in user to home page
 
+        # if not found in subscribers, check professionals (allows professionals to log in through same form)
+        if not user:
+            user = Professional.query.filter_by(email=email).first()
+        
+        if user and check_password_hash(user.pswd_hash, password):
+            session['user_id'] = user.professional_id
+            session['is_professional'] = True  # set a flag in the session to indicate this is a professional user
+            flash('Login successful as professional', 'success')
+            return redirect(url_for('home')) # send logged in user to home page
+
         flash('Invalid email or password') # if login fails, show error and stay on login page
 
     # show the auth page for failed logins 
@@ -55,16 +65,11 @@ def register():
     address = request.form.get('address')
     sex = request.form.get('sex')
     dob_str = request.form.get('date_of_birth')
-    is_professional = request.form.get('professional')
+    is_professional = request.form.get('is_professional') == 'true'
 
     # email is correct format
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         flash('Invalid email format', 'error')
-        return redirect(url_for('auth.auth_page', tab='register'))
-    
-    # block professional signup until workflow is implemented
-    if is_professional:
-        flash('Professional registration is not available via this form. Please contact support.', 'error')
         return redirect(url_for('auth.auth_page', tab='register'))
 
     # validate all fields are present 
@@ -93,22 +98,36 @@ def register():
     # hashes password for storage
     password_hash = generate_password_hash(password)
 
-    # creates new user in database
-    new_user = Subscriber.create_new_subscriber(
-        email=email,
-        name=name,
-        address=address,
-        pswd_hash=password_hash,
-        sex=sex,
-        date_of_birth=date_of_birth,
-        height = None,
-        weight = None
-    )
+    # block professional signup until workflow is implemented
+    print(is_professional)
+    if is_professional:
+        new_user = Professional.create_new_professional(
+            email=email,
+            name=name,
+            address=address,
+            pswd_hash=password_hash,
+            profession=None
+        )
+        session['user_id'] = new_user.professional_id
+        session['is_professional'] = True  # set a flag in the session to indicate user is professional
 
-    # logs new user in and redirects to home page
-    session['user_id'] = new_user.subscriber_id
+    else:
+        # creates new user in database
+        new_user = Subscriber.create_new_subscriber(
+            email=email,
+            name=name,
+            address=address,
+            pswd_hash=password_hash,
+            sex=sex,
+            date_of_birth=date_of_birth,
+            height = None,
+            weight = None
+        )
+
+        # logs new user in and redirects to home page
+        session['user_id'] = new_user.subscriber_id
     flash('Registration successful, you are now logged in', 'success')
-    return redirect(url_for('home'))
+    return redirect(url_for('dashboard'))
 
 # logs user out by clearing session and redirecting to login page
 @auth_bp.route('/logout')

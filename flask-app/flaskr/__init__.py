@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 from flask import Flask, abort, app, jsonify, render_template, request, session, redirect, url_for, flash
 from rapidfuzz import process, fuzz
-from flaskr.extensions import db
+from flaskr.extensions import db, migrate
 from flaskr.models import Comment, Food, MealItem, Subscriber, Meal, Professional, Manages
 
 def create_app(test_config=None):
@@ -21,6 +21,7 @@ def create_app(test_config=None):
     os.makedirs(app.instance_path, exist_ok=True)
 
     db.init_app(app)  # use init_app on the module-level db, not a new instance
+    migrate.init_app(app, db)
 
     with app.app_context():
         from flaskr import models

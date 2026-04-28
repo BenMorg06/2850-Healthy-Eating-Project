@@ -1,3 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Diary – Healthy Dietary System{% endblock %}
+{% block title %}Dashboard – Healthy Dietary System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-heading">
+        <h1>Dashboard</h1>
+    </div>
+    
+    <div class="dashboard-grid">
+        {% if caloric_need %}
+        <div class="card stat-card">
+            <div>
+                <h3>Daily Calorie Needs</h3>
+                <p>{{ caloric_need | round(0) }} kcal</p>
+                <p>{{ caloric_intake | round(0) }} kcal consumed</p>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if score %}
+        <div class="card stat-card">
+            <div>
+                <h3>Today's Nutrition Score</h3>
+                <p>{{ score | round(0) }} /100</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

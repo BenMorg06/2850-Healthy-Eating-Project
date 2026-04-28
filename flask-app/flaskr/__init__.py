@@ -1,9 +1,11 @@
+from datetime import date
 from datetime import datetime
 import os
 from flask import Flask, abort, app, jsonify, render_template, request, session, redirect, url_for, flash
 from rapidfuzz import process, fuzz
 from flaskr.extensions import db, migrate
 from flaskr.models import Comment, Food, MealItem, Subscriber, Meal, Professional, Manages
+from flaskr.nutrition import calculate_caloric_need, load_subscriber_meals_for_date, aggregate_meal_nutrition, calculate_daily_score
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -49,6 +51,26 @@ def create_app(test_config=None):
             return None
         return db.session.get(Subscriber, user_id)
 
+    @app.route('/dashboard')
+    def dashboard():
+        if session.get('is_professional'):
+            return redirect(url_for('professional_dashboard'))
+        
+        subscriber = get_current_subscriber()
+        if not subscriber:
+            return redirect(url_for('auth.login'))
+        
+        caloric_need = calculate_caloric_need(subscriber)
+        today = date.today()
+        all_meals_today = load_subscriber_meals_for_date(subscriber, today)
+        meals_today = [m for m in all_meals_today if len(m.items) > 0]
+        score = None
+        if len(meals_today) >= 1:
+            nutrition_data = aggregate_meal_nutrition(meals_today)
+            score, _, _ = calculate_daily_score(meals_today, nutrition_data, subscriber)
+        print(score)
+        return render_template('dashboard.html', caloric_need=caloric_need, caloric_intake=nutrition_data['calories'], score=score)
+
     @app.route('/diary')
     def diary():
         client_id = request.args.get('client_id', type=int)
@@ -78,12 +100,6 @@ def create_app(test_config=None):
                 .all()
         meals = [m for m in all_meals if len(m.items) > 0]
         return render_template('diary.html', active_page='diary', meals=meals)
-    
-    @app.route('/dashboard')
-    def dashboard():
-        if session.get('is_professional'):
-            return redirect(url_for('professional_dashboard'))
-        return render_template('dashboard.html')
     
     @app.route('/create_meal', methods=['GET'])
     def create_meal():

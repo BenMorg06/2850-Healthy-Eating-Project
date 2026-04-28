@@ -35,7 +35,8 @@ def calculate_daily_score(meals, nutrition_data, subscriber):
         macro_scores.append(score)
     
     macro_score = sum(macro_scores) / len(macro_scores)
-    nutrition_score = 0.4 * calorie_score + 0.6 * macro_score  # Equal weight
+    nutrition_score = 0.5 * calorie_score + 0.5 * macro_score  # Equal weight
+    print(f"Calorie Score: {calorie_score:.2f}, Macro Score: {macro_score:.2f}, Nutrition Score: {nutrition_score:.2f}")
     return nutrition_score, calorie_score, macro_score
 
 def calculate_bmr(subscriber):

@@ -238,6 +238,26 @@ def create_app(test_config=None):
             kcal_pct=kcal_pct
         )   
 
+    @app.route('/settings', methods=['GET', 'POST'])
+    def settings():
+        if session.get('is_professional'):
+            return redirect(url_for('professional_dashboard'))
+        
+        subscriber = get_current_subscriber()
+        if not subscriber:
+            return redirect(url_for('auth.login'))
+        
+        if request.method == 'POST':
+            subscriber.height = request.form.get('height', type=float)
+            subscriber.weight = request.form.get('weight', type=float)
+            subscriber.sex = request.form.get('sex')
+            subscriber.activity_level = request.form.get('activity_level')
+            db.session.commit()
+            flash('Settings updated successfully!', 'success')
+            return redirect(url_for('settings'))
+        
+        return render_template('settings.html', active_page='settings', subscriber=subscriber)
+
 
     @app.route('/professional_dashboard')
     def professional_dashboard():

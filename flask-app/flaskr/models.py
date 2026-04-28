@@ -329,3 +329,16 @@ class NutritionScore(db.Model):
     calorie_score = db.Column(db.Float, nullable=False)
     macro_score = db.Column(db.Float, nullable=False)
     calculated_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    @classmethod
+    def create_new_score(cls, subscriber_id, date, score, calorie_score, macro_score):
+        new_score = cls(
+            subscriber_id=subscriber_id,
+            date=date,
+            score=score,
+            calorie_score=calorie_score,
+            macro_score=macro_score
+        )
+        db.session.add(new_score)
+        db.session.commit()
+        return new_score

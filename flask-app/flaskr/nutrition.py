@@ -3,41 +3,57 @@ from datetime import date
 
 def calculate_daily_score(meals, nutrition_data, subscriber):
     '''
-    Calorie Score: (Total Calories Consumed / Caloric Need) * 100, capped at 150% over
-    Macro Score: Average of carbs (45-65%), protein (10-35%), fat (20-35%) scores
-    Each macro: 100 if in range, scaled down if outside
+    Calorie Score: (Actual Calories / Caloric Need) * 100, capped at 150%
+    Macro Score: Average of carbs/protein/fat/sugar scores
+    - Carbs/Protein/Fat: Based on middle % of caloric_need
+    - Excess fat penalized
+    - Sugar penalized if >50g
     '''
     caloric_need = calculate_caloric_need(subscriber)
     if caloric_need is None or nutrition_data['calories'] == 0:
         return 0, 0, 0
     
-    calorie_score = min(150, nutrition_data['calories'] / caloric_need * 100)
+    # Calorie score with penalty for excess
+    actual_cal = nutrition_data['calories']
+    if actual_cal <= caloric_need:
+        calorie_score = (actual_cal / caloric_need) * 100
+    else:
+        calorie_score = max(0, 200 - (actual_cal / caloric_need) * 100)  # Penalty for overeating
     
-    # Macro targets as % of calories
-    macro_ranges = {
-        'carbs': (45, 65),
-        'protein': (10, 35),
-        'fat': (20, 35)
+    # Macro targets: middle of ranges * caloric_need
+    macro_targets_pct = {
+        'carbs': 55,    # middle of 45-65
+        'protein': 17.5, # middle of 10-35
+        'fat': 27.5     # middle of 20-35
     }
     
     macro_scores = []
-    for macro, (min_pct, max_pct) in macro_ranges.items():
-        grams_to_cal = {'carbs': 4, 'protein': 4, 'fat': 9}[macro]
-        actual_cal = nutrition_data[macro] * grams_to_cal
-        actual_pct = (actual_cal / nutrition_data['calories']) * 100
+    for macro, mid_pct in macro_targets_pct.items():
+        target_cal = (mid_pct / 100) * caloric_need
+        grams_per_cal = {'carbs': 4, 'protein': 4, 'fat': 9}[macro]
+        target_grams = target_cal / grams_per_cal
         
-        if min_pct <= actual_pct <= max_pct:
-            score = 100
-        elif actual_pct < min_pct:
-            score = max(0, (actual_pct / min_pct) * 100)
+        actual_grams = nutrition_data[macro]
+        if macro == 'fat' and actual_grams > target_grams:
+            # Penalty for excess fat
+            excess_ratio = (actual_grams - target_grams) / target_grams
+            score = max(0, 100 - (excess_ratio * 50))  # Reduce by 50% of excess ratio
         else:
-            score = max(0, ((max_pct * 2 - actual_pct) / max_pct) * 100)
+            score = min(100, (actual_grams / target_grams) * 100) if target_grams > 0 else 0
         macro_scores.append(score)
+    
+    # Sugar penalty: max 50g recommended
+    sugar_limit = 50
+    actual_sugar = nutrition_data['sugar']
+    if actual_sugar > sugar_limit:
+        sugar_penalty = min(50, (actual_sugar - sugar_limit) / sugar_limit * 50)  # Up to 50 points penalty
+        macro_scores.append(max(0, 100 - sugar_penalty))
+    else:
+        macro_scores.append(100)
     
     macro_score = sum(macro_scores) / len(macro_scores)
     nutrition_score = 0.5 * calorie_score + 0.5 * macro_score  # Equal weight
-    print(f"Calorie Score: {calorie_score:.2f}, Macro Score: {macro_score:.2f}, Nutrition Score: {nutrition_score:.2f}")
-    return nutrition_score, calorie_score, macro_score
+    return round(nutrition_score, 1), round(calorie_score, 1), round(macro_score, 1)
 
 def calculate_bmr(subscriber):
     age = subscriber.date_of_birth and (date.today().year - subscriber.date_of_birth.year)

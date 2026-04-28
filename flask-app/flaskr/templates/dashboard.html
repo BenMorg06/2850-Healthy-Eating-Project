@@ -23,7 +23,8 @@
         <div class="card stat-card">
             <div>
                 <h3>Today's Nutrition Score</h3>
-                <p>{{ score | round(0) }} /100</p>
+                <p>{{ score | round(0) }}/100</p>
+                <small>Calories: {{ calorie_score | round(0) }}/100<br>Macros: {{ macro_score | round(0) }}/100</small>
             </div>
         </div>
         {% endif %}

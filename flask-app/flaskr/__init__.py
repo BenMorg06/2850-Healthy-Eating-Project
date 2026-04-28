@@ -65,11 +65,14 @@ def create_app(test_config=None):
         all_meals_today = load_subscriber_meals_for_date(subscriber, today)
         meals_today = [m for m in all_meals_today if len(m.items) > 0]
         score = None
+        calorie_score = None
+        macro_score = None
+        caloric_intake = 0
         if len(meals_today) >= 1:
             nutrition_data = aggregate_meal_nutrition(meals_today)
-            score, _, _ = calculate_daily_score(meals_today, nutrition_data, subscriber)
-        print(score)
-        return render_template('dashboard.html', caloric_need=caloric_need, caloric_intake=nutrition_data['calories'], score=score)
+            caloric_intake = nutrition_data['calories']
+            score, calorie_score, macro_score = calculate_daily_score(meals_today, nutrition_data, subscriber)
+        return render_template('dashboard.html', caloric_need=caloric_need, caloric_intake=caloric_intake, score=score, calorie_score=calorie_score, macro_score=macro_score)
 
     @app.route('/diary')
     def diary():

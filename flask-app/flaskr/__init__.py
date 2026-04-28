@@ -61,18 +61,33 @@ def create_app(test_config=None):
             return redirect(url_for('auth.login'))
         
         caloric_need = calculate_caloric_need(subscriber)
+        macro_targets = {}
+        if caloric_need:
+            macro_targets_pct = {
+                'carbs': 55,
+                'protein': 17.5,
+                'fat': 27.5
+            }
+            for macro, pct in macro_targets_pct.items():
+                target_cal = (pct / 100) * caloric_need
+                grams_per_cal = {'carbs': 4, 'protein': 4, 'fat': 9}[macro]
+                macro_targets[macro] = round(target_cal / grams_per_cal, 1)
+            macro_targets['sugar'] = 50  # max recommended
+            macro_targets['fibre'] = 25  # approximate daily
+        
         today = date.today()
         all_meals_today = load_subscriber_meals_for_date(subscriber, today)
         meals_today = [m for m in all_meals_today if len(m.items) > 0]
         score = None
         calorie_score = None
         macro_score = None
+        nutrition_data = {}
         caloric_intake = 0
         if len(meals_today) >= 1:
             nutrition_data = aggregate_meal_nutrition(meals_today)
             caloric_intake = nutrition_data['calories']
             score, calorie_score, macro_score = calculate_daily_score(meals_today, nutrition_data, subscriber)
-        return render_template('dashboard.html', caloric_need=caloric_need, caloric_intake=caloric_intake, score=score, calorie_score=calorie_score, macro_score=macro_score)
+        return render_template('dashboard.html', caloric_need=caloric_need, caloric_intake=caloric_intake, score=score, calorie_score=calorie_score, macro_score=macro_score, macro_targets=macro_targets, nutrition_data=nutrition_data)
 
     @app.route('/diary')
     def diary():

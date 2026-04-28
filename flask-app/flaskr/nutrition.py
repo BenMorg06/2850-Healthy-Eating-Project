@@ -34,12 +34,11 @@ def calculate_daily_score(meals, nutrition_data, subscriber):
         target_grams = target_cal / grams_per_cal
         
         actual_grams = nutrition_data[macro]
-        if macro == 'fat' and actual_grams > target_grams:
-            # Penalty for excess fat
-            excess_ratio = (actual_grams - target_grams) / target_grams
-            score = max(0, 100 - (excess_ratio * 50))  # Reduce by 50% of excess ratio
+        excess_ratio = (actual_grams - target_grams) / target_grams if target_grams > 0 else 0
+        if excess_ratio > 0:
+            score = max(0, 100 - (excess_ratio * 50))
         else:
-            score = min(100, (actual_grams / target_grams) * 100) if target_grams > 0 else 0
+            score = (actual_grams / target_grams) * 100 if target_grams > 0 else 0
         macro_scores.append(score)
     
     # Sugar penalty: max 50g recommended

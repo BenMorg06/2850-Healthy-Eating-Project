@@ -324,5 +324,8 @@ class NutritionScore(db.Model):
     # Define NutritionScore columns from db diagram
     nutrition_score_id = db.Column(db.Integer, primary_key=True)
     subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
     score = db.Column(db.Float, nullable=False)
+    calorie_score = db.Column(db.Float, nullable=False)
+    macro_score = db.Column(db.Float, nullable=False)
     calculated_at = db.Column(db.DateTime, nullable=False, default=datetime.now)

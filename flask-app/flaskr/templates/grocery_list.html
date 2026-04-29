@@ -23,33 +23,7 @@
 						<h4 class="meal-toggle">{{ meal.meal_time.strftime('%d %b %Y – %H:%M') }} ᐯ</h4>
 						<span class="tag red">{{ meal.items | length }} item(s)</span>
 					</div>
-<!--
-					{% if meal.items %}
-					<table class="meal-table">
-						<thead>
-							<tr>
-								<th>Food</th>
-								<th>Weight (g)</th>
-								<th>Kcal</th>
-								<th>Protein</th>
-								<th>Carbs</th>
-								<th>Fat</th>
-							</tr>
-						</thead>
-						<tbody>
-							{% for item in meal.items %}
-							<tr>
-								<td>{{ item.food.food_name }}</td>
-								<td>{{ item.weight }}g</td>
-								<td>{{ ((item.food.kcal / 100) * item.weight) | round(1) }}</td>
-								<td>{{ ((item.food.protein / 100) * item.weight) | round(1) }}g</td>
-								<td>{{ ((item.food.carbs / 100) * item.weight) | round(1) }}g</td>
-								<td>{{ ((item.food.fats / 100) * item.weight) | round(1) }}g</td>
-							</tr>
-							{% endfor %}
-						</tbody>
-					</table>
--->
+
 					<div class="meal-food-list" id="meal-foods-{{ loop.index }}" aria-hidden="true">
 						<ul>
 							{% for item in meal.items %}

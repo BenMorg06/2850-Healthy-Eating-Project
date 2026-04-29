@@ -3,3 +3,5 @@ flask-sqlalchemy
 pytest
 Werkzeug
 rapidfuzz
+pandas
+openpyxl

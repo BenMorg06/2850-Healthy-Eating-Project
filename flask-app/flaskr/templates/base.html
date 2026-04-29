@@ -42,6 +42,11 @@
             <a href="{{ url_for('create_meal') }}" class="side-btn quick-log-btn">
                 <span>➕</span><span>Log Meal</span>
             </a>
+            {% if not session.get('is_professional') %}
+            <a href="{{ url_for('grocery_list') }}" class="side-btn {% if active_page == 'grocery_list' %}active{% endif %}">
+                <span>📃</span><span>Grocery list</span>
+            </a>
+            {% endif %}
             <a href="{{ url_for('auth.logout') }}" class="side-btn {% if active_page == 'logout' %}active{% endif %}">
                 <span>↤</span><span>Logout</span>
             </a>

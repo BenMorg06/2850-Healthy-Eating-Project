@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %} Create a grocery list from saved meals {% endblock %}
+
+{% block content %}
+<section class="page active" id="grocery-list">
+	<div class="page-heading">
+		<h1>Grocery List</h1>
+		<a href="{{ url_for('diary') }}" class="tiny-blue big-btn">View Diary</a>
+	</div>
+
+	<div class="card diary-editor">
+		<div class="section-title-row">
+			<h3>Saved Meals</h3>
+		</div>
+
+		{% if meals %}
+			<div class="diary-entries">
+				{% for meal in meals %}
+				<div class="card meal-entry">
+					<div class="section-title-row">
+						<h4>{{ meal.meal_time.strftime('%d %b %Y – %H:%M') }}</h4>
+						<span class="tag red">{{ meal.items | length }} item(s)</span>
+					</div>
+
+					{% if meal.items %}
+					<table class="meal-table">
+						<thead>
+							<tr>
+								<th>Food</th>
+								<th>Weight (g)</th>
+								<th>Kcal</th>
+								<th>Protein</th>
+								<th>Carbs</th>
+								<th>Fat</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for item in meal.items %}
+							<tr>
+								<td>{{ item.food.food_name }}</td>
+								<td>{{ item.weight }}g</td>
+								<td>{{ ((item.food.kcal / 100) * item.weight) | round(1) }}</td>
+								<td>{{ ((item.food.protein / 100) * item.weight) | round(1) }}g</td>
+								<td>{{ ((item.food.carbs / 100) * item.weight) | round(1) }}g</td>
+								<td>{{ ((item.food.fats / 100) * item.weight) | round(1) }}g</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+					{% endif %}
+				</div>
+				{% endfor %}
+			</div>
+		{% else %}
+			<div class="diary-summary">
+				<p class="empty-hint">No saved meals yet. Add meals in the diary to build your grocery list.</p>
+			</div>
+		{% endif %}
+	</div>
+</section>
+{% endblock %}
+

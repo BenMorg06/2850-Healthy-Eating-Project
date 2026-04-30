@@ -3,7 +3,7 @@ import os
 from flask import Flask, abort, app, jsonify, render_template, request, session, redirect, url_for, flash
 from rapidfuzz import process, fuzz
 from flaskr.extensions import db
-from flaskr.models import Comment, Food, MealItem, Subscriber, Meal, Professional, Manages
+from flaskr.models import Comment, Food, MealItem, Subscriber, Meal, Professional, Manages, SavedMeal
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -206,7 +206,50 @@ def create_app(test_config=None):
         meal.delete_meal()
         flash('Meal deleted successfully!', 'success')
         return redirect(url_for('diary'))
-    
+
+    @app.route('/meal/<int:meal_id>/favourite', methods=['POST'])
+    def favourite_meal(meal_id):
+        meal = db.session.get(Meal, meal_id) or abort(404)
+        subscriber = get_current_subscriber()
+        if not subscriber or meal.diary_id != subscriber.diary_id:
+            abort(403)
+
+        meal_name = meal.meal_time.strftime('%d %b %Y – %H:%M')
+        SavedMeal.create_new_saved_meal(subscriber.subscriber_id, meal_id, meal_name)
+        flash('Meal added to favourites.', 'success')
+        return redirect(url_for('diary'))
+
+    @app.route('/favourites')
+    def favourites():
+        subscriber = get_current_subscriber()
+        if not subscriber:
+            return redirect(url_for('auth.login'))
+
+        saved_meals = SavedMeal.get_by_subscriber(subscriber.subscriber_id)
+        return render_template('favourites.html', active_page='favourites', saved_meals=saved_meals)
+
+    @app.route('/favourites/quick_add/<int:meal_id>', methods=['POST'])
+    def quick_add_favourite_meal(meal_id):
+        subscriber = get_current_subscriber()
+        if not subscriber:
+            return redirect(url_for('auth.login'))
+
+        saved = SavedMeal.query.filter_by(subscriber_id=subscriber.subscriber_id, meal_id=meal_id).first()
+        if not saved:
+            abort(404)
+
+        source_meal = db.session.get(Meal, meal_id)
+        if not source_meal:
+            flash('Original meal no longer exists. Cannot quick add.', 'error')
+            return redirect(url_for('favourites'))
+
+        new_meal = Meal.create_new_meal(subscriber.diary_id, meal_time=datetime.now())
+        for item in source_meal.items:
+            MealItem.create_new_meal_item(new_meal.meal_id, item.food_id, item.weight)
+
+        flash('Favourite meal added to your diary.', 'success')
+        return redirect(url_for('diary'))
+
     @app.route('/meal/<int:meal_id>/view')
     def view_meal(meal_id):
         meal = db.session.get(Meal, meal_id) or abort(404)

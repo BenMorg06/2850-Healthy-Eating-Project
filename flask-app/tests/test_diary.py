@@ -1,6 +1,6 @@
 from flaskr.extensions import db
 from flaskr import create_app
-from flaskr.models import Subscriber, Meal, MealItem, Food
+from flaskr.models import Subscriber, Meal, MealItem, Food, SavedMeal
 from datetime import date, datetime
 import pytest
 

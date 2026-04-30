@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Login / Register - Healthy Dietary System{% endblock %}
+{% block content %}
+<div class="auth-body">
+    <div class="auth-wrapper">
+        <div class="auth-left">
+            <div class="auth-brand">
+                <div class="brand-mark large">🍽</div>
+                <h1>Healthy Dietary System</h1>
+                <p>Sign in to manage your dietary records, favourites, diary and professional support.</p>
+                <p style="margin-top:16px;font-size:13px;">Seed test accounts: jessie@example.com / 123456, lucas@example.com / 123456, emily@example.com / 123456.</p>
+            </div>
+        </div>
+
+        <div class="auth-right">
+            <div class="auth-card">
+                <div class="flash-wrap">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% for category, message in messages %}
+                            <div class="flash {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endwith %}
+                </div>
+
+                <div class="auth-tab-row">
+                    <a href="{{ url_for('auth.login', tab='login') }}" class="auth-tab {{ 'active' if active_tab != 'register' else '' }}" style="text-align:center;">Login</a>
+                    <a href="{{ url_for('auth.login', tab='register') }}" class="auth-tab {{ 'active' if active_tab == 'register' else '' }}" style="text-align:center;">Register</a>
+                </div>
+
+                {% if active_tab == 'register' %}
+                <form class="auth-form active" action="{{ url_for('auth.login', tab='register') }}" method="post">
+                    <input type="hidden" name="form_type" value="register" />
+                    <h2>Register</h2>
+                    <div class="auth-grid">
+                        <div>
+                            <label>Email</label>
+                            <input type="email" name="email" placeholder="Enter your email" required />
+                        </div>
+                        <div>
+                            <label>Username</label>
+                            <input type="text" name="name" placeholder="Enter Name" required />
+                        </div>
+                        <div>
+                            <label>Address</label>
+                            <input type="text" name="address" placeholder="Enter address" required />
+                        </div>
+                        <div>
+                            <label>Gender</label>
+                            <select name="sex" required>
+                                <option value="">Select gender</option>
+                                <option>Male</option>
+                                <option>Female</option>
+                                <option>Other</option>
+                                <option>Prefer not to say</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Date of Birth</label>
+                            <input type="date" name="date_of_birth" required />
+                        </div>
+                        <div>
+                            <label>Password</label>
+                            <input type="password" name="password" placeholder="Enter password" required />
+                        </div>
+                        <div>
+                            <label>Confirm Password</label>
+                            <input type="password" name="confirm_password" placeholder="Confirm password" required />
+                        </div>
+                        <div>
+                            <label>Apply As Professional</label>
+                            <input type="checkbox" name="is_professional" value="true" />
+                        </div>
+                    </div>
+                    <button type="submit" class="auth-submit">Create Account</button>
+                    <div class="auth-bottom-link">
+                        <a href="{{ url_for('auth.auth_page', tab='login') }}">Already have an account?</a>
+                    </div>
+                </form>
+                {% else %}
+                <form class="auth-form active" action="{{ url_for('auth.login') }}" method="post">
+                    <h2>Login</h2>
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="Enter your email" required />
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="Enter your password" required />
+                    <button type="submit" class="auth-submit">Login</button>
+                    <div class="auth-bottom-link">
+                        <a href="{{ url_for('auth.auth_page', tab='register') }}">Create a new account</a>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

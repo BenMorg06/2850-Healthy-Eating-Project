@@ -43,10 +43,18 @@ def create_app(test_config=None):
     
     # esnure user is logged in to view homepage
     def get_current_subscriber():
+        if session.get('is_professional'):
+            return None
         user_id = session.get('user_id')
         if not user_id:
             return None
         return db.session.get(Subscriber, user_id)
+
+    def get_current_professional():
+        user_id = session.get('user_id')
+        if not user_id or not session.get('is_professional'):
+            return None
+        return db.session.get(Professional, user_id)
 
     @app.route('/diary')
     def diary():
@@ -211,8 +219,26 @@ def create_app(test_config=None):
     def view_meal(meal_id):
         meal = db.session.get(Meal, meal_id) or abort(404)
         subscriber = get_current_subscriber()
-        if not subscriber or meal.diary_id != subscriber.diary_id:
+        professional = get_current_professional()
+        can_comment = False
+
+        if subscriber:
+            if meal.diary_id != subscriber.diary_id:
+                abort(403)
+        elif professional:
+            meal_owner = Subscriber.query.filter_by(diary_id=meal.diary_id).first()
+            if not meal_owner:
+                abort(404)
+            relationship = Manages.query.filter_by(
+                professional_id=professional.professional_id,
+                subscriber_id=meal_owner.subscriber_id
+            ).first()
+            if not relationship:
+                abort(403)
+            can_comment = True
+        else:
             abort(403)
+
         items = MealItem.get_by_meal(meal_id)
         comments = Comment.get_by_meal(meal_id)
         
@@ -234,8 +260,37 @@ def create_app(test_config=None):
             total_carbs=total_carbs,
             total_fat=total_fat,
             daily_goal=daily_goal,
-            kcal_pct=kcal_pct
+            kcal_pct=kcal_pct,
+            can_comment=can_comment
         )   
+
+    @app.route('/meal/<int:meal_id>/comment', methods=['POST'])
+    def add_comment(meal_id):
+        professional = get_current_professional()
+        if not professional:
+            abort(403)
+
+        meal = db.session.get(Meal, meal_id) or abort(404)
+        meal_owner = Subscriber.query.filter_by(diary_id=meal.diary_id).first()
+        if not meal_owner:
+            abort(404)
+
+        relationship = Manages.query.filter_by(
+            professional_id=professional.professional_id,
+            subscriber_id=meal_owner.subscriber_id
+        ).first()
+        if not relationship:
+            abort(403)
+
+        title = request.form.get('title', '').strip()
+        body = request.form.get('body', '').strip()
+        if not title or not body:
+            flash('Title and comment body are required.', 'error')
+            return redirect(url_for('view_meal', meal_id=meal_id))
+
+        Comment.create_new_comment(meal_id, professional.professional_id, title, body)
+        flash('Comment added successfully.', 'success')
+        return redirect(url_for('view_meal', meal_id=meal_id))
 
 
     @app.route('/professional_dashboard')

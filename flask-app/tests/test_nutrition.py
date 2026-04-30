@@ -51,8 +51,8 @@ def incomplete_subscriber(app):
             name='Incomplete User',
             address='456 St',
             pswd_hash=generate_password_hash('testpass123'),
-            sex=None,
-            date_of_birth=None,
+            sex='Male',
+            date_of_birth=date(1990, 1, 1),
             height=None,
             weight=None,
         )
@@ -92,7 +92,18 @@ def make_meal_for_subscriber(app, subscriber_id, food_id, weight=100, meal_date=
         return meal.meal_id
     
 class TestCalculateBmr:
-    pass
+    def test_male_returns_expected_value(self, app, subscriber):
+        with app.app_context():
+            s = db.session.get(Subscriber, subscriber)
+            bmr = calculate_bmr(s)
+            age = date.today().year - 1990
+            expected = 66.5 + (13.75 * 70) + (5 * 175) - (6.75 * age)
+            assert abs(bmr - expected) < 1
+ 
+    def test_incomplete_profile_returns_none(self, app, incomplete_subscriber):
+        with app.app_context():
+            s = db.session.get(Subscriber, incomplete_subscriber)
+            assert calculate_bmr(s) is None
 
 class TestCalculateCaloricNeed:
     pass

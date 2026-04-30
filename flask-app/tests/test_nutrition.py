@@ -106,7 +106,17 @@ class TestCalculateBmr:
             assert calculate_bmr(s) is None
 
 class TestCalculateCaloricNeed:
-    pass
+    def test_returns_value_for_complete_subscriber(self, app, subscriber):
+        with app.app_context():
+            s = db.session.get(Subscriber, subscriber)
+            result = calculate_caloric_need(s)
+            assert result is not None and result > 0
+ 
+    def test_returns_none_for_incomplete_subscriber(self, app, incomplete_subscriber):
+        with app.app_context():
+            s = db.session.get(Subscriber, incomplete_subscriber)
+            assert calculate_caloric_need(s) is None
+ 
 
 class TestAggregateMealNutrition:
     pass

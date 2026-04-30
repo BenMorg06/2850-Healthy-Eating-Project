@@ -69,10 +69,10 @@ def logged_in_client(client, subscriber):
  
 ### Helpers
 
-def make_food(app, kcal=200, protein=10, carbs=30, fats=5, sugar=8, fibre=3):
+def make_food(app, kj=200, kcal=200, protein=10, carbs=30, fats=5, sugar=8, fibre=3):
     """Insert a Food row and return its id."""
     with app.app_context():
-        food = Food(kcal=kcal, protein=protein, carbs=carbs, fats=fats, sugar=sugar, fibre=fibre)
+        food = Food(food_id=1, food_name="Test Food", kj=kj, kcal=kcal, protein=protein, carbs=carbs, fats=fats, sugar=sugar, fibre=fibre)
         db.session.add(food)
         db.session.commit()
         return food.food_id
@@ -117,9 +117,37 @@ class TestCalculateCaloricNeed:
             s = db.session.get(Subscriber, incomplete_subscriber)
             assert calculate_caloric_need(s) is None
  
-
 class TestAggregateMealNutrition:
-    pass
+    def test_sums_correctly_for_100g(self, app, subscriber):
+        food_id = make_food(app, kcal=200, protein=10, carbs=30, fats=5, sugar=8, fibre=3)
+        make_meal_for_subscriber(app, subscriber, food_id, weight=100)
+ 
+        with app.app_context():
+            s = db.session.get(Subscriber, subscriber)
+            meals = Meal.query.filter_by(diary_id=s.diary_id).all()
+            result = aggregate_meal_nutrition(meals)
+ 
+        assert result['calories'] == 200
+        assert result['protein'] == 10
+        assert result['carbs'] == 30
+        assert result['fat'] == 5
+        assert result['sugar'] == 8
+        assert result['fibre'] == 3
+ 
+    def test_scales_by_weight(self, app, subscriber):
+        food_id = make_food(app, kcal=200, protein=10, carbs=30, fats=5, sugar=8, fibre=3)
+        make_meal_for_subscriber(app, subscriber, food_id, weight=50)
+ 
+        with app.app_context():
+            s = db.session.get(Subscriber, subscriber)
+            meals = Meal.query.filter_by(diary_id=s.diary_id).all()
+            result = aggregate_meal_nutrition(meals)
+ 
+        assert result['calories'] == 100
+ 
+    def test_empty_meals_returns_zeros(self):
+        result = aggregate_meal_nutrition([])
+        assert all(result[k] == 0 for k in ('calories', 'protein', 'carbs', 'fat', 'sugar', 'fibre'))
 
 class TestCalculateDailyScore:
     pass

@@ -71,6 +71,57 @@ def test_cancel_meal_deletes_it(app, logged_in_client, subscriber):
     with app.app_context():
         assert db.session.get(Meal, meal_id) is None  # meal was deleted
 
+def test_favourite_meal(app, logged_in_client, subscriber):
+    with app.app_context():
+        s = db.session.get(Subscriber, subscriber)
+        meal = Meal.create_new_meal(s.diary_id, datetime.now())
+        meal_id = meal.meal_id
+
+    response = logged_in_client.post(f'/meal/{meal_id}/favourite', follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Meal added to favourites' in response.data
+
+    with app.app_context():
+        saved = SavedMeal.query.filter_by(subscriber_id=subscriber, meal_id=meal_id).first()
+        assert saved is not None
+        assert saved.meal_name is not None
+
+def test_view_favourites_page_empty(logged_in_client):
+    response = logged_in_client.get('/favourites')
+    assert response.status_code == 200
+    assert b'No favourite meals yet' in response.data
+
+def test_view_favourites_page_with_meals(app, logged_in_client, subscriber):
+    with app.app_context():
+        s = db.session.get(Subscriber, subscriber)
+        meal = Meal.create_new_meal(s.diary_id, datetime.now())
+        SavedMeal.create_new_saved_meal(subscriber, meal.meal_id, 'Test Meal')
+
+    response = logged_in_client.get('/favourites')
+    assert response.status_code == 200
+    assert b'Favourite Meals' in response.data
+    assert b'Test Meal' in response.data
+
+def test_quick_add_favourite_meal(app, logged_in_client, subscriber):
+    with app.app_context():
+        s = db.session.get(Subscriber, subscriber)
+        meal = Meal.create_new_meal(s.diary_id, datetime.now())
+        food = Food(food_id='F999', food_name='Chicken', kcal=165, kj=690, carbs=0, protein=31, fats=3.6, sugar=0, fibre=0)
+        db.session.add(food)
+        db.session.commit()
+        MealItem.create_new_meal_item(meal.meal_id, 'F999', 100)
+        SavedMeal.create_new_saved_meal(subscriber, meal.meal_id, 'Chicken 100g')
+        initial_meal_count = Meal.query.filter_by(diary_id=s.diary_id).count()
+        meal_id = meal.meal_id
+
+    response = logged_in_client.post(f'/favourites/quick_add/{meal_id}', follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Favourite meal added to your diary' in response.data
+
+    with app.app_context():
+        new_meal_count = Meal.query.filter_by(diary_id=s.diary_id).count()
+        assert new_meal_count == initial_meal_count + 1
+
 def test_finish_meal_flashes_message(app, logged_in_client, subscriber):
     with app.app_context():
         s = db.session.get(Subscriber, subscriber)

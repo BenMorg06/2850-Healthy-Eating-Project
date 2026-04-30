@@ -193,4 +193,29 @@ class TestCalculateDailyScore:
         assert macro_ok > macro_bad
 
 class TestDashboard:
-    pass
+    def test_unauthenticated_redirects_to_login(self, client):
+        response = client.get('/dashboard')
+        assert response.status_code == 302
+        assert 'login' in response.headers['Location']
+ 
+    def test_renders_for_logged_in_subscriber(self, logged_in_client):
+        response = logged_in_client.get('/dashboard')
+        assert response.status_code == 200
+        assert b'Daily Calorie Needs' in response.data
+ 
+    def test_score_absent_without_meals(self, logged_in_client):
+        response = logged_in_client.get('/dashboard')
+        assert b'Nutrition Score' not in response.data
+ 
+    def test_score_present_with_meals(self, app, logged_in_client, subscriber):
+        food_id = make_food(app)
+        make_meal_for_subscriber(app, subscriber, food_id, weight=100)
+        response = logged_in_client.get('/dashboard')
+        assert b'Nutrition Score' in response.data
+ 
+    def test_caloric_need_absent_for_incomplete_profile(self, client, app, incomplete_subscriber):
+        with client.session_transaction() as sess:
+            sess['user_id'] = incomplete_subscriber
+            sess['_fresh'] = True
+        response = client.get('/dashboard')
+        assert b'Daily Calorie Needs' not in response.data

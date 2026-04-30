@@ -150,7 +150,47 @@ class TestAggregateMealNutrition:
         assert all(result[k] == 0 for k in ('calories', 'protein', 'carbs', 'fat', 'sugar', 'fibre'))
 
 class TestCalculateDailyScore:
-    pass
+    def test_zero_calories_returns_all_zeros(self, app, subscriber):
+        with app.app_context():
+            s = db.session.get(Subscriber, subscriber)
+            nutrition = dict(calories=0, protein=0, carbs=0, fat=0, sugar=0, fibre=0)
+            score, calorie_score, macro_score = calculate_daily_score([], nutrition, s)
+        assert score == 0 and calorie_score == 0 and macro_score == 0
+ 
+    def test_incomplete_subscriber_returns_all_zeros(self, app, incomplete_subscriber):
+        with app.app_context():
+            s = db.session.get(Subscriber, incomplete_subscriber)
+            nutrition = dict(calories=2000, protein=80, carbs=250, fat=60, sugar=30, fibre=25)
+            score, calorie_score, macro_score = calculate_daily_score([], nutrition, s)
+        assert score == 0 and calorie_score == 0 and macro_score == 0
+ 
+    def test_meeting_caloric_need_scores_100_calories(self, app, subscriber):
+        with app.app_context():
+            s = db.session.get(Subscriber, subscriber)
+            caloric_need = calculate_caloric_need(s)
+            nutrition = dict(calories=caloric_need, protein=80, carbs=250, fat=60, sugar=30, fibre=25)
+            _, calorie_score, _ = calculate_daily_score([], nutrition, s)
+        assert calorie_score == pytest.approx(100, abs=1)
+ 
+    def test_overeating_penalises_calorie_score(self, app, subscriber):
+        with app.app_context():
+            s = db.session.get(Subscriber, subscriber)
+            caloric_need = calculate_caloric_need(s)
+            nutrition_exact = dict(calories=caloric_need,     protein=80, carbs=250, fat=60, sugar=30, fibre=25)
+            nutrition_over  = dict(calories=caloric_need * 2, protein=80, carbs=250, fat=60, sugar=30, fibre=25)
+            _, score_exact, _ = calculate_daily_score([], nutrition_exact, s)
+            _, score_over,  _ = calculate_daily_score([], nutrition_over,  s)
+        assert score_exact > score_over
+ 
+    def test_excess_sugar_lowers_macro_score(self, app, subscriber):
+        with app.app_context():
+            s = db.session.get(Subscriber, subscriber)
+            caloric_need = calculate_caloric_need(s)
+            nutrition_ok  = dict(calories=caloric_need, protein=80, carbs=250, fat=60, sugar=30,  fibre=25)
+            nutrition_bad = dict(calories=caloric_need, protein=80, carbs=250, fat=60, sugar=150, fibre=25)
+            _, _, macro_ok  = calculate_daily_score([], nutrition_ok,  s)
+            _, _, macro_bad = calculate_daily_score([], nutrition_bad, s)
+        assert macro_ok > macro_bad
 
 class TestDashboard:
     pass

@@ -3,10 +3,8 @@ from datetime import datetime
 import os
 from flask import Flask, abort, app, jsonify, render_template, request, session, redirect, url_for, flash
 from rapidfuzz import process, fuzz
-from flaskr.extensions import db
 from flaskr.models import Comment, Food, MealItem, Subscriber, Meal, Professional, Manages, SavedMeal
 from flaskr.extensions import db, migrate
-from flaskr.models import Comment, Food, MealItem, Subscriber, Meal, Professional, Manages
 from flaskr.nutrition import calculate_caloric_need, load_subscriber_meals_for_date, aggregate_meal_nutrition, calculate_daily_score
 
 def create_app(test_config=None):

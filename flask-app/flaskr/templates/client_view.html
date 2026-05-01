@@ -1,11 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard – Healthy Dietary System{% endblock %}
+{% block title %}{{ client.name }} – Healthy Dietary System{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="page-heading">
-        <h1>Dashboard</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div>
+                <h1>{{ client.name }}</h1>
+                <p style="color: var(--muted); margin: 4px 0;">{{ client.email }}</p>
+            </div>
+            <a href="{{ url_for('diary', client_id=client.subscriber_id) }}" class="tiny-blue big-btn">📋 View Entire Diary</a>
+        </div>
+    </div>
+    
+    <div style="margin-top: 20px; margin-bottom: 20px;">
+        <div class="card" style="padding: 20px;">
+            <h3>Client Information</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 12px;">
+                <div>
+                    <p style="color: var(--muted); margin-bottom: 4px;">Email</p>
+                    <p style="font-weight: 500;">{{ client.email }}</p>
+                </div>
+                <div>
+                    <p style="color: var(--muted); margin-bottom: 4px;">Address</p>
+                    <p style="font-weight: 500;">{{ client.address }}</p>
+                </div>
+            </div>
+        </div>
     </div>
     
     {% if score_history.dates|length > 0 %}
@@ -23,7 +45,7 @@
             <div>
                 <h3>Daily Calorie Needs</h3>
                 <p>{{ caloric_need | round(0) }} kcal</p>
-                <p>{{ caloric_intake | round(0) }} kcal consumed</p>
+                <p style="color: var(--muted); font-size: 14px;">{{ caloric_intake | round(0) }} kcal consumed today</p>
             </div>
         </div>
         {% endif %}
@@ -33,7 +55,14 @@
             <div>
                 <h3>Today's Nutrition Score</h3>
                 <p>{{ score | round(0) }}/100</p>
-                <small>Calories: {{ calorie_score | round(0) }}/100<br>Macros: {{ macro_score | round(0) }}/100</small>
+                <small style="color: var(--muted);">Calories: {{ calorie_score | round(0) }}/100<br>Macros: {{ macro_score | round(0) }}/100</small>
+            </div>
+        </div>
+        {% else %}
+        <div class="card stat-card">
+            <div>
+                <h3>Today's Nutrition Score</h3>
+                <p style="color: var(--muted);">No meals logged</p>
             </div>
         </div>
         {% endif %}
@@ -81,7 +110,6 @@
         {% endif %}
     </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     {% if score_history.dates|length > 0 %}

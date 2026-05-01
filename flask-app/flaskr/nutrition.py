@@ -1,5 +1,6 @@
-
 from datetime import date
+from flaskr.models import NutritionScore
+from flaskr import db
 
 def calculate_daily_score(meals, nutrition_data, subscriber):
     '''
@@ -120,3 +121,26 @@ def update_nutrition_score(subscriber, date):
     nutrition_score, calorie_score, macro_score = calculate_daily_score(meals, nutrition_data, subscriber)
     NutritionScore.create_new_score(subscriber.subscriber_id, date, nutrition_score, calorie_score, macro_score)
     return nutrition_score
+
+def save_nutrition_score(subscriber_id, score_date, score, calorie_score, macro_score):
+    """Upsert a NutritionScore row for the given subscriber and date."""
+    if score is None:
+        return
+    existing = NutritionScore.query.filter_by(
+        subscriber_id=subscriber_id,
+        date=score_date
+    ).first()
+    if existing:
+        existing.score = score
+        existing.calorie_score = calorie_score
+        existing.macro_score = macro_score
+    else:
+        new_score = NutritionScore(
+            subscriber_id=subscriber_id,
+            date=score_date,
+            score=score,
+            calorie_score=calorie_score,
+            macro_score=macro_score
+        )
+        db.session.add(new_score)
+    db.session.commit()

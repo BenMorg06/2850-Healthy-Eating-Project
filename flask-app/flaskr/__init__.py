@@ -1,9 +1,13 @@
+from datetime import date
 from datetime import datetime
 import os
 from flask import Flask, abort, app, jsonify, render_template, request, session, redirect, url_for, flash
 from rapidfuzz import process, fuzz
 from flaskr.extensions import db
 from flaskr.models import Comment, Food, MealItem, Subscriber, Meal, Professional, Manages, SavedMeal
+from flaskr.extensions import db, migrate
+from flaskr.models import Comment, Food, MealItem, Subscriber, Meal, Professional, Manages
+from flaskr.nutrition import calculate_caloric_need, load_subscriber_meals_for_date, aggregate_meal_nutrition, calculate_daily_score
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -21,6 +25,7 @@ def create_app(test_config=None):
     os.makedirs(app.instance_path, exist_ok=True)
 
     db.init_app(app)  # use init_app on the module-level db, not a new instance
+    migrate.init_app(app, db)
 
     with app.app_context():
         from flaskr import models
@@ -43,10 +48,55 @@ def create_app(test_config=None):
     
     # esnure user is logged in to view homepage
     def get_current_subscriber():
+        if session.get('is_professional'):
+            return None
         user_id = session.get('user_id')
         if not user_id:
             return None
         return db.session.get(Subscriber, user_id)
+
+    @app.route('/dashboard')
+    def dashboard():
+        if session.get('is_professional'):
+            return redirect(url_for('professional_dashboard'))
+        
+        subscriber = get_current_subscriber()
+        if not subscriber:
+            return redirect(url_for('auth.login'))
+        
+        caloric_need = calculate_caloric_need(subscriber)
+        macro_targets = {}
+        if caloric_need:
+            macro_targets_pct = {
+                'carbs': 55,
+                'protein': 17.5,
+                'fat': 27.5
+            }
+            for macro, pct in macro_targets_pct.items():
+                target_cal = (pct / 100) * caloric_need
+                grams_per_cal = {'carbs': 4, 'protein': 4, 'fat': 9}[macro]
+                macro_targets[macro] = round(target_cal / grams_per_cal, 1)
+            macro_targets['sugar'] = 50  # max recommended
+            macro_targets['fibre'] = 25  # approximate daily
+        
+        today = date.today()
+        all_meals_today = load_subscriber_meals_for_date(subscriber, today)
+        meals_today = [m for m in all_meals_today if len(m.items) > 0]
+        score = None
+        calorie_score = None
+        macro_score = None
+        nutrition_data = {}
+        caloric_intake = 0
+        if len(meals_today) >= 1:
+            nutrition_data = aggregate_meal_nutrition(meals_today)
+            caloric_intake = nutrition_data['calories']
+            score, calorie_score, macro_score = calculate_daily_score(meals_today, nutrition_data, subscriber)
+        return render_template('dashboard.html', caloric_need=caloric_need, caloric_intake=caloric_intake, score=score, calorie_score=calorie_score, macro_score=macro_score, macro_targets=macro_targets, nutrition_data=nutrition_data)
+    def get_current_professional():
+        user_id = session.get('user_id')
+        if not user_id or not session.get('is_professional'):
+            return None
+        return db.session.get(Professional, user_id)
 
     @app.route('/diary')
     def diary():
@@ -77,12 +127,6 @@ def create_app(test_config=None):
                 .all()
         meals = [m for m in all_meals if len(m.items) > 0]
         return render_template('diary.html', active_page='diary', meals=meals)
-    
-    @app.route('/dashboard')
-    def dashboard():
-        if session.get('is_professional'):
-            return redirect(url_for('professional_dashboard'))
-        return render_template('dashboard.html')
     
     @app.route('/create_meal', methods=['GET'])
     def create_meal():
@@ -254,8 +298,26 @@ def create_app(test_config=None):
     def view_meal(meal_id):
         meal = db.session.get(Meal, meal_id) or abort(404)
         subscriber = get_current_subscriber()
-        if not subscriber or meal.diary_id != subscriber.diary_id:
+        professional = get_current_professional()
+        can_comment = False
+
+        if subscriber:
+            if meal.diary_id != subscriber.diary_id:
+                abort(403)
+        elif professional:
+            meal_owner = Subscriber.query.filter_by(diary_id=meal.diary_id).first()
+            if not meal_owner:
+                abort(404)
+            relationship = Manages.query.filter_by(
+                professional_id=professional.professional_id,
+                subscriber_id=meal_owner.subscriber_id
+            ).first()
+            if not relationship:
+                abort(403)
+            can_comment = True
+        else:
             abort(403)
+
         items = MealItem.get_by_meal(meal_id)
         comments = Comment.get_by_meal(meal_id)
         
@@ -277,8 +339,56 @@ def create_app(test_config=None):
             total_carbs=total_carbs,
             total_fat=total_fat,
             daily_goal=daily_goal,
-            kcal_pct=kcal_pct
+            kcal_pct=kcal_pct,
+            can_comment=can_comment
         )   
+
+    @app.route('/settings', methods=['GET', 'POST'])
+    def settings():
+        if session.get('is_professional'):
+            return redirect(url_for('professional_dashboard'))
+        
+        subscriber = get_current_subscriber()
+        if not subscriber:
+            return redirect(url_for('auth.login'))
+        
+        if request.method == 'POST':
+            subscriber.height = request.form.get('height', type=float)
+            subscriber.weight = request.form.get('weight', type=float)
+            subscriber.sex = request.form.get('sex')
+            subscriber.activity_level = request.form.get('activity_level')
+            db.session.commit()
+            flash('Settings updated successfully!', 'success')
+            return redirect(url_for('settings'))
+        
+        return render_template('settings.html', active_page='settings', subscriber=subscriber)
+    @app.route('/meal/<int:meal_id>/comment', methods=['POST'])
+    def add_comment(meal_id):
+        professional = get_current_professional()
+        if not professional:
+            abort(403)
+
+        meal = db.session.get(Meal, meal_id) or abort(404)
+        meal_owner = Subscriber.query.filter_by(diary_id=meal.diary_id).first()
+        if not meal_owner:
+            abort(404)
+
+        relationship = Manages.query.filter_by(
+            professional_id=professional.professional_id,
+            subscriber_id=meal_owner.subscriber_id
+        ).first()
+        if not relationship:
+            abort(403)
+
+        title = request.form.get('title', '').strip()
+        body = request.form.get('body', '').strip()
+        if not title or not body:
+            flash('Title and comment body are required.', 'error')
+            return redirect(url_for('view_meal', meal_id=meal_id))
+
+        Comment.create_new_comment(meal_id, professional.professional_id, title, body)
+        flash('Comment added successfully.', 'success')
+        return redirect(url_for('view_meal', meal_id=meal_id))
 
 
     @app.route('/professional_dashboard')

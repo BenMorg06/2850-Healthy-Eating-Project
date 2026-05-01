@@ -1,3 +1,75 @@
 {% extends "base.html" %}
 
-{% block title %}Diary – Healthy Dietary System{% endblock %}
+{% block title %}Dashboard – Healthy Dietary System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-heading">
+        <h1>Dashboard</h1>
+    </div>
+    
+    <div class="dashboard-grid">
+        {% if caloric_need %}
+        <div class="card stat-card">
+            <div>
+                <h3>Daily Calorie Needs</h3>
+                <p>{{ caloric_need | round(0) }} kcal</p>
+                <p>{{ caloric_intake | round(0) }} kcal consumed</p>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if score %}
+        <div class="card stat-card">
+            <div>
+                <h3>Today's Nutrition Score</h3>
+                <p>{{ score | round(0) }}/100</p>
+                <small>Calories: {{ calorie_score | round(0) }}/100<br>Macros: {{ macro_score | round(0) }}/100</small>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if nutrition_data %}
+        <div class="card">
+            <h3>Today's Macros</h3>
+            <table class="macro-table">
+                <thead>
+                    <tr>
+                        <th>Nutrient</th>
+                        <th>Consumed</th>
+                        <th>Recommended</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Carbs (g)</td>
+                        <td>{{ nutrition_data.carbs | round(1) }}</td>
+                        <td>{{ macro_targets.carbs }}</td>
+                    </tr>
+                    <tr>
+                        <td>Protein (g)</td>
+                        <td>{{ nutrition_data.protein | round(1) }}</td>
+                        <td>{{ macro_targets.protein }}</td>
+                    </tr>
+                    <tr>
+                        <td>Fat (g)</td>
+                        <td>{{ nutrition_data.fat | round(1) }}</td>
+                        <td>{{ macro_targets.fat }}</td>
+                    </tr>
+                    <tr>
+                        <td>Sugar (g)</td>
+                        <td>{{ nutrition_data.sugar | round(1) }}</td>
+                        <td>&lt; {{ macro_targets.sugar }}</td>
+                    </tr>
+                    <tr>
+                        <td>Fibre (g)</td>
+                        <td>{{ nutrition_data.fibre | round(1) }}</td>
+                        <td>{{ macro_targets.fibre }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

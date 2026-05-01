@@ -32,6 +32,7 @@ class Subscriber(db.Model):
     date_of_birth = db.Column(db.Date, nullable=False)
     height = db.Column(db.Float, nullable=True)
     weight = db.Column(db.Float, nullable=True)
+    activity_level = db.Column(db.String(20), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     diary_id = db.Column(db.Integer, db.ForeignKey('food_diary.diary_id'), nullable=True)
 
@@ -317,3 +318,27 @@ class RecipeRating(db.Model):
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=True)
     rated_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+# Nutrition Score
+class NutritionScore(db.Model):
+    # Define NutritionScore columns from db diagram
+    nutrition_score_id = db.Column(db.Integer, primary_key=True)
+    subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    score = db.Column(db.Float, nullable=False)
+    calorie_score = db.Column(db.Float, nullable=False)
+    macro_score = db.Column(db.Float, nullable=False)
+    calculated_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    @classmethod
+    def create_new_score(cls, subscriber_id, date, score, calorie_score, macro_score):
+        new_score = cls(
+            subscriber_id=subscriber_id,
+            date=date,
+            score=score,
+            calorie_score=calorie_score,
+            macro_score=macro_score
+        )
+        db.session.add(new_score)
+        db.session.commit()
+        return new_score

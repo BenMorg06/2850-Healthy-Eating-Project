@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Favourites – Healthy Dietary System{% endblock %}
+
+{% block content %}
+<section class="page active" id="favourites">
+    <div class="page-heading">
+        <h1>Favourite Meals</h1>
+        <a href="{{ url_for('diary') }}" class="ghost-btn small-btn">← Back to Diary</a>
+    </div>
+
+    {% if saved_meals %}
+    <div class="menu-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 20px;">
+        {% for saved in saved_meals %}
+        <div class="menu-card">
+            <div style="padding: 16px;">
+                <div class="section-title-row" style="margin-bottom: 12px;">
+                    <h4 style="margin: 0;">{{ saved.meal_name }}</h4>
+                    <span class="tag green">{{ saved.meal.items | length }} item(s)</span>
+                </div>
+                {% if saved.meal.items %}
+                <ul style="padding-left: 16px; margin: 0 0 12px; color: var(--muted); font-size: 13px;">
+                    {% for item in saved.meal.items[:3] %}
+                    <li>{{ item.food.food_name }} ({{ item.weight }}g)</li>
+                    {% endfor %}
+                    {% if saved.meal.items | length > 3 %}
+                    <li>+ {{ saved.meal.items | length - 3 }} more</li>
+                    {% endif %}
+                </ul>
+                {% else %}
+                <p class="empty-hint">No items saved for this meal.</p>
+                {% endif %}
+                <form method="post" action="{{ url_for('quick_add_favourite_meal', meal_id=saved.meal_id) }}">
+                    <button type="submit" class="tiny-blue small-btn" style="width:100%;">Quick add as new meal</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; padding: 40px;">
+        <h3>No favourite meals yet</h3>
+        <p style="color: var(--muted);">Mark a diary meal as favourite and it will appear here for quick reuse.</p>
+        <a href="{{ url_for('diary') }}" class="tiny-blue big-btn">Browse your diary</a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

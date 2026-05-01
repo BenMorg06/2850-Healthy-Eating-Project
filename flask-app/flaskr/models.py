@@ -86,7 +86,7 @@ class Meal(db.Model):
     # Define Meal relationships
     items = db.relationship('MealItem', backref='meals', cascade='all, delete-orphan')
     comments = db.relationship('Comment', backref='meal')
-    saved_by = db.relationship('SavedMeal', backref='meal')
+    saved_by = db.relationship('SavedMeal', backref='meal', cascade='all, delete-orphan')
 
     @classmethod
     def create_new_meal(cls, diary_id, meal_time):
@@ -168,6 +168,29 @@ class SavedMeal(db.Model):
     meal_name = db.Column(db.String(120), nullable=False)
     meal_id = db.Column(db.Integer, db.ForeignKey('meal.meal_id'), nullable=False)
     saved_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    @classmethod
+    def create_new_saved_meal(cls, subscriber_id, meal_id, meal_name):
+        existing = cls.query.filter_by(subscriber_id=subscriber_id, meal_id=meal_id).first()
+        if existing:
+            return existing
+        new_saved = cls(subscriber_id=subscriber_id, meal_id=meal_id, meal_name=meal_name)
+        db.session.add(new_saved)
+        db.session.commit()
+        return new_saved
+
+    @classmethod
+    def get_by_subscriber(cls, subscriber_id):
+        return cls.query.join(Meal).filter(cls.subscriber_id==subscriber_id).order_by(cls.saved_at.desc()).all()
+
+    @classmethod
+    def delete_saved_meal(cls, subscriber_id, meal_id):
+        saved = cls.query.filter_by(subscriber_id=subscriber_id, meal_id=meal_id).first()
+        if saved:
+            db.session.delete(saved)
+            db.session.commit()
+            return True
+        return False
 
 #  Professional
 class Professional(db.Model):

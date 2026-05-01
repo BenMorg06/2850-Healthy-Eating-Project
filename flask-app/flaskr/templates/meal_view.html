@@ -103,6 +103,16 @@
             <span class="tag green">{{ comments | length }}</span>
         </div>
 
+        {% if can_comment %}
+            <form method="post" action="{{ url_for('add_comment', meal_id=meal.meal_id) }}" style="margin-bottom: 18px;">
+                <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:12px;">
+                    <input name="title" type="text" placeholder="Comment title" style="padding:10px; border:1px solid #ddd; border-radius:6px; width:100%;" required>
+                    <textarea name="body" rows="4" placeholder="Add your feedback for the client" style="padding:10px; border:1px solid #ddd; border-radius:6px; width:100%; resize:vertical;" required></textarea>
+                </div>
+                <button type="submit" class="tiny-blue small-btn">Submit Comment</button>
+            </form>
+        {% endif %}
+
         {% if comments %}
             <div style="display:flex; flex-direction:column; gap:12px;">
                 {% for comment in comments %}

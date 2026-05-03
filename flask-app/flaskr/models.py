@@ -365,3 +365,60 @@ class NutritionScore(db.Model):
         db.session.add(new_score)
         db.session.commit()
         return new_score
+
+# Message
+class Message(db.Model):
+    # Define Message columns
+    message_id = db.Column(db.Integer, primary_key=True)
+    sender_professional_id = db.Column(db.Integer, db.ForeignKey('professional.professional_id'), nullable=True)
+    sender_subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=True)
+    recipient_professional_id = db.Column(db.Integer, db.ForeignKey('professional.professional_id'), nullable=True)
+    recipient_subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=True)
+    subject = db.Column(db.String(200), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    sent_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    is_read = db.Column(db.Boolean, nullable=False, default=False)
+
+    # Define Message relationships
+    sender_professional = db.relationship('Professional', foreign_keys=[sender_professional_id], backref='sent_messages')
+    sender_subscriber = db.relationship('Subscriber', foreign_keys=[sender_subscriber_id], backref='sent_messages')
+    recipient_professional = db.relationship('Professional', foreign_keys=[recipient_professional_id], backref='received_messages')
+    recipient_subscriber = db.relationship('Subscriber', foreign_keys=[recipient_subscriber_id], backref='received_messages')
+
+    @classmethod
+    def create_new_message(cls, sender_professional_id, sender_subscriber_id, recipient_professional_id, recipient_subscriber_id, subject, body):
+        new_message = cls(
+            sender_professional_id=sender_professional_id,
+            sender_subscriber_id=sender_subscriber_id,
+            recipient_professional_id=recipient_professional_id,
+            recipient_subscriber_id=recipient_subscriber_id,
+            subject=subject,
+            body=body
+        )
+        db.session.add(new_message)
+        db.session.commit()
+        return new_message
+
+    @classmethod
+    def get_conversation(cls, user1_professional_id, user1_subscriber_id, user2_professional_id, user2_subscriber_id):
+        # Get messages between two users (either professional-subscriber or professional-professional)
+        return cls.query.filter(
+            (
+                ((cls.sender_professional_id == user1_professional_id) & (cls.sender_subscriber_id == user1_subscriber_id) &
+                 (cls.recipient_professional_id == user2_professional_id) & (cls.recipient_subscriber_id == user2_subscriber_id)) |
+                ((cls.sender_professional_id == user2_professional_id) & (cls.sender_subscriber_id == user2_subscriber_id) &
+                 (cls.recipient_professional_id == user1_professional_id) & (cls.recipient_subscriber_id == user1_subscriber_id))
+            )
+        ).order_by(cls.sent_at).all()
+
+    @classmethod
+    def get_user_messages(cls, professional_id, subscriber_id):
+        # Get all messages for a user
+        return cls.query.filter(
+            ((cls.sender_professional_id == professional_id) & (cls.sender_subscriber_id == subscriber_id)) |
+            ((cls.recipient_professional_id == professional_id) & (cls.recipient_subscriber_id == subscriber_id))
+        ).order_by(cls.sent_at.desc()).all()
+
+    def mark_as_read(self):
+        self.is_read = True
+        db.session.commit()

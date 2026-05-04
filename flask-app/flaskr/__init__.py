@@ -3,6 +3,7 @@ import os
 from flask import Flask, abort, jsonify, render_template, request, session, redirect, url_for, flash
 from flaskr.extensions import db
 from flaskr.models import Comment, Food, MealItem, Subscriber, Meal
+from flaskr.routes.dashboard import dashboard_bp
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -133,5 +134,9 @@ def create_app(test_config=None):
             daily_goal=daily_goal,
             kcal_pct=kcal_pct
         )   
+
+    # Alex's code - start
+    app.register_blueprint(dashboard_bp)
+    # Alex's code - end
 
     return app

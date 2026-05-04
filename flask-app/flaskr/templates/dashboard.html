@@ -1,3 +1,30 @@
 {% extends "base.html" %}
 
 {% block title %}Diary – Healthy Dietary System{% endblock %}
+
+{% block content %}
+<!-- Alex's code - start -->
+<section class="dashboard-card metrics-card">
+  <h3>Weekly Nutrition Metrics (Monday to Sunday)</h3>
+
+  <div class="metric-filters">
+    <label><input type="checkbox" class="metric-toggle" value="calories" checked> Calories</label>
+    <label><input type="checkbox" class="metric-toggle" value="fat" checked> Fat</label>
+    <label><input type="checkbox" class="metric-toggle" value="protein" checked> Protein</label>
+    <label><input type="checkbox" class="metric-toggle" value="carbs" checked> Carbs</label>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="weeklyMetricsChart"></canvas>
+  </div>
+</section>
+
+<section class="dashboard-card feedback-card">
+  <h3>How you’re doing vs NHS guidance</h3>
+  <ul id="nhsFeedbackList"></ul>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard-metrics.js') }}"></script>
+<!-- Alex's code - end -->
+{% endblock %}

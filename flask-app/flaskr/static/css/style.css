@@ -6,6 +6,24 @@
   margin-top: 1rem;
 }
 
+.feedback-card {
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+#daily-amounts {
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.highlight-red {
+  color: red;
+  font-weight: bold;
+}
+
 .metric-filters {
   display: flex;
   gap: 0.75rem;

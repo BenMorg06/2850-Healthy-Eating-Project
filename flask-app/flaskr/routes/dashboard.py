@@ -1,9 +1,8 @@
 from datetime import date, datetime, timedelta
 from flask import Blueprint, render_template, jsonify
 from flask_login import login_required, current_user
-from sqlalchemy import func
 from flaskr import db
-# from flaskr.models import MealLog  # remove this hard import
+from flaskr.models import Subscriber, Meal, MealItem
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -14,9 +13,7 @@ def dashboard():
     return render_template("dashboard.html")
 
 @dashboard_bp.route("/api/dashboard/weekly-metrics")
-@login_required
 def weekly_metrics():
-    # Alex's code - start
     # NHS daily guideline values (general adult guidance).
     nhs_daily_targets = {
         "calories": 2000,  # kcal
@@ -27,67 +24,54 @@ def weekly_metrics():
 
     labels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
-    # Build current Monday-Sunday week window.
     today = date.today()
     week_start = today - timedelta(days=today.weekday())
     week_end = week_start + timedelta(days=6)
 
-    # Try to locate your real meal log model dynamically.
-    # Replace with your exact model once confirmed.
-    from flaskr import models
-    LogModel = (
-        getattr(models, "MealLog", None)
-        or getattr(models, "FoodLog", None)
-        or getattr(models, "DiaryEntry", None)
-        or getattr(models, "IntakeLog", None)
-    )
+    subscriber_id = None
+    if hasattr(current_user, 'id') and current_user.is_authenticated:
+        subscriber_id = getattr(current_user, 'subscriber_id', None) or current_user.id
 
-    # Default empty weekly series so frontend always renders.
-    series = {
-        "calories": [0.0] * 7,
-        "fat": [0.0] * 7,
-        "protein": [0.0] * 7,
-        "carbs": [0.0] * 7,
-    }
+    if subscriber_id is None:
+        subscriber_id = 1
 
-    if LogModel is not None:
-        # Adjust these field names if your model uses different names.
-        rows = (
-            db.session.query(
-                func.date(LogModel.logged_at).label("day"),
-                func.coalesce(func.sum(LogModel.calories), 0).label("calories"),
-                func.coalesce(func.sum(LogModel.fat), 0).label("fat"),
-                func.coalesce(func.sum(LogModel.protein), 0).label("protein"),
-                func.coalesce(func.sum(LogModel.carbs), 0).label("carbs"),
-            )
-            .filter(
-                LogModel.user_id == current_user.id,
-                LogModel.logged_at >= datetime.combine(week_start, datetime.min.time()),
-                LogModel.logged_at < datetime.combine(week_end + timedelta(days=1), datetime.min.time()),
-            )
-            .group_by(func.date(LogModel.logged_at))
+    subscriber = Subscriber.query.get(subscriber_id)
+    if not subscriber or not subscriber.diary_id:
+        series = {k: [0.0] * 7 for k in nhs_daily_targets}
+    else:
+        week_data = {
+            day.isoformat(): {"calories": 0.0, "fat": 0.0, "protein": 0.0, "carbs": 0.0}
+            for day in (week_start + timedelta(days=i) for i in range(7))
+        }
+
+        meals = (
+            Meal.query
+            .filter_by(diary_id=subscriber.diary_id)
+            .filter(Meal.meal_time >= datetime.combine(week_start, datetime.min.time()))
+            .filter(Meal.meal_time < datetime.combine(week_end + timedelta(days=1), datetime.min.time()))
             .all()
         )
 
-        days = {}
-        for i in range(7):
-            d = week_start + timedelta(days=i)
-            days[d.isoformat()] = {"calories": 0.0, "fat": 0.0, "protein": 0.0, "carbs": 0.0}
+        for meal in meals:
+            day_key = meal.meal_time.date().isoformat()
+            if day_key not in week_data:
+                continue
 
-        for row in rows:
-            days[str(row.day)] = {
-                "calories": float(row.calories or 0),
-                "fat": float(row.fat or 0),
-                "protein": float(row.protein or 0),
-                "carbs": float(row.carbs or 0),
-            }
+            for item in meal.items:
+                if not item.food:
+                    continue
 
-        date_keys = [(week_start + timedelta(days=i)).isoformat() for i in range(7)]
+                weight = float(item.weight or 0)
+                week_data[day_key]["calories"] += (item.food.kcal or 0) * weight / 100
+                week_data[day_key]["fat"] += (item.food.fats or 0) * weight / 100
+                week_data[day_key]["protein"] += (item.food.protein or 0) * weight / 100
+                week_data[day_key]["carbs"] += (item.food.carbs or 0) * weight / 100
+
         series = {
-            "calories": [days[d]["calories"] for d in date_keys],
-            "fat": [days[d]["fat"] for d in date_keys],
-            "protein": [days[d]["protein"] for d in date_keys],
-            "carbs": [days[d]["carbs"] for d in date_keys],
+            "calories": [round(week_data[(week_start + timedelta(days=i)).isoformat()]["calories"], 1) for i in range(7)],
+            "fat": [round(week_data[(week_start + timedelta(days=i)).isoformat()]["fat"], 1) for i in range(7)],
+            "protein": [round(week_data[(week_start + timedelta(days=i)).isoformat()]["protein"], 1) for i in range(7)],
+            "carbs": [round(week_data[(week_start + timedelta(days=i)).isoformat()]["carbs"], 1) for i in range(7)]
         }
 
     totals = {k: sum(v) for k, v in series.items()}
@@ -104,4 +88,3 @@ def weekly_metrics():
         "week_start": week_start.isoformat(),
         "week_end": week_end.isoformat(),
     })
-    # Alex's code - end

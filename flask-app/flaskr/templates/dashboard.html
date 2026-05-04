@@ -3,9 +3,17 @@
 {% block title %}Diary – Healthy Dietary System{% endblock %}
 
 {% block content %}
-<!-- Alex's code - start -->
 <section class="dashboard-card metrics-card">
-  <h3>Weekly Nutrition Metrics (Monday to Sunday)</h3>
+  <div class="metrics-card-header">
+    <h3>Weekly Nutrition Metrics (Monday to Sunday)</h3>
+    <div class="streak-card">
+      <span class="streak-icon">🔥</span>
+      <div class="streak-text">
+        <strong id="streak-count">0</strong>
+        <small>day streak</small>
+      </div>
+    </div>
+  </div>
 
   <div class="metric-filters">
     <label><input type="checkbox" class="metric-toggle" value="calories" checked> Calories</label>
@@ -28,5 +36,4 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/dashboard-metrics.js') }}"></script>
-<!-- Alex's code - end -->
 {% endblock %}

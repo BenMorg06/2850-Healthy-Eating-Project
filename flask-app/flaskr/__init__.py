@@ -135,8 +135,6 @@ def create_app(test_config=None):
             kcal_pct=kcal_pct
         )   
 
-    # Alex's code - start
     app.register_blueprint(dashboard_bp)
-    # Alex's code - end
 
     return app

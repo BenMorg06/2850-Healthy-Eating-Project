@@ -38,6 +38,7 @@ def weekly_metrics():
     subscriber = Subscriber.query.get(subscriber_id)
     if not subscriber or not subscriber.diary_id:
         series = {k: [0.0] * 7 for k in nhs_daily_targets}
+        streak = 0
     else:
         week_data = {
             day.isoformat(): {"calories": 0.0, "fat": 0.0, "protein": 0.0, "carbs": 0.0}
@@ -52,10 +53,22 @@ def weekly_metrics():
             .all()
         )
 
+        streak_meals = (
+            Meal.query
+            .filter_by(diary_id=subscriber.diary_id)
+            .filter(Meal.meal_time >= datetime.combine(today - timedelta(days=30), datetime.min.time()))
+            .filter(Meal.meal_time <= datetime.combine(today, datetime.max.time()))
+            .all()
+        )
+
+        streak_dates = {meal.meal_time.date() for meal in streak_meals}
+
+        meal_dates = set()
         for meal in meals:
             day_key = meal.meal_time.date().isoformat()
             if day_key not in week_data:
                 continue
+            meal_dates.add(meal.meal_time.date())
 
             for item in meal.items:
                 if not item.food:
@@ -74,6 +87,12 @@ def weekly_metrics():
             "carbs": [round(week_data[(week_start + timedelta(days=i)).isoformat()]["carbs"], 1) for i in range(7)]
         }
 
+        streak = 0
+        current_day = today
+        while current_day in streak_dates:
+            streak += 1
+            current_day -= timedelta(days=1)
+
     totals = {k: sum(v) for k, v in series.items()}
     weekly_targets = {k: v * 7 for k, v in nhs_daily_targets.items()}
     percentages = {
@@ -87,4 +106,5 @@ def weekly_metrics():
         "percentages": percentages,
         "week_start": week_start.isoformat(),
         "week_end": week_end.isoformat(),
+        "streak": streak
     })

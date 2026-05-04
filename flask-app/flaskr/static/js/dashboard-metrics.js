@@ -1,4 +1,3 @@
-// Alex's code - start
 let metricsChart = null;
 
 const metricConfig = {
@@ -37,9 +36,16 @@ async function fetchMetrics() {
     renderChart();
     renderFeedback();
     renderDailyAmounts();
+    renderStreak(payload.streak);
   } catch (error) {
     console.error('Error fetching weekly metrics:', error);
   }
+}
+
+function renderStreak(streak = 0) {
+  const streakCount = document.getElementById('streak-count');
+  if (!streakCount) return;
+  streakCount.textContent = streak;
 }
 
 function renderChart() {
@@ -124,4 +130,3 @@ document.addEventListener("DOMContentLoaded", () => {
   bindFilters();
   fetchMetrics();
 });
-// Alex's code - end

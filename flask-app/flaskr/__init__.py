@@ -558,19 +558,14 @@ def create_app(test_config=None):
         if not professional_id and not subscriber_id:
             return redirect(url_for('auth.login'))
 
-        # Get all messages for this user
         all_messages = Message.get_user_messages(professional_id, subscriber_id)
 
-        # Group messages by conversation partner
         conversations = {}
         for message in all_messages:
-            # Determine the other participant
             if message.sender_professional_id == professional_id and message.sender_subscriber_id == subscriber_id:
-                # We sent this message, so recipient is the other person
                 other_professional_id = message.recipient_professional_id
                 other_subscriber_id = message.recipient_subscriber_id
             else:
-                # We received this message, so sender is the other person
                 other_professional_id = message.sender_professional_id
                 other_subscriber_id = message.sender_subscriber_id
 
@@ -578,7 +573,6 @@ def create_app(test_config=None):
             conv_key = f"{other_professional_id or 0}_{other_subscriber_id or 0}"
 
             if conv_key not in conversations:
-                # Get the other person's name
                 if other_professional_id:
                     other_person = Professional.query.get(other_professional_id)
                     other_name = other_person.name if other_person else "Unknown Professional"
@@ -605,7 +599,6 @@ def create_app(test_config=None):
 
     @app.route('/messages/<int:other_professional_id>/<int:other_subscriber_id>')
     def view_conversation(other_professional_id, other_subscriber_id):
-        # Convert 0 back to None for database queries
         other_professional_id = other_professional_id if other_professional_id != 0 else None
         other_subscriber_id = other_subscriber_id if other_subscriber_id != 0 else None
 
@@ -619,18 +612,15 @@ def create_app(test_config=None):
         if not professional_id and not subscriber_id:
             return redirect(url_for('auth.login'))
 
-        # Get the conversation
         conversation_messages = Message.get_conversation(
             professional_id, subscriber_id,
             other_professional_id, other_subscriber_id
         )
 
-        # Mark messages as read
         for message in conversation_messages:
             if message.recipient_professional_id == professional_id and message.recipient_subscriber_id == subscriber_id and not message.is_read:
                 message.mark_as_read()
 
-        # Get the other person's name
         if other_professional_id:
             other_person = Professional.query.get(other_professional_id)
             other_name = other_person.name if other_person else "Unknown Professional"
@@ -669,7 +659,6 @@ def create_app(test_config=None):
 
         # Verify the recipient relationship (for professionals and clients)
         if sender_professional_id and recipient_subscriber_id:
-            # Professional sending to client - verify relationship
             relationship = Manages.query.filter_by(
                 professional_id=sender_professional_id,
                 subscriber_id=recipient_subscriber_id
@@ -677,7 +666,6 @@ def create_app(test_config=None):
             if not relationship:
                 abort(403)
         elif sender_subscriber_id and recipient_professional_id:
-            # Client sending to professional - verify relationship
             relationship = Manages.query.filter_by(
                 professional_id=recipient_professional_id,
                 subscriber_id=sender_subscriber_id
@@ -700,19 +688,15 @@ def create_app(test_config=None):
     @app.route('/messages/compose', methods=['GET', 'POST'])
     def compose_message():
         if session.get('is_professional'):
-            # Professional composing to a client
             sender_professional_id = session.get('user_id')
             sender_subscriber_id = None
 
-            # Get list of clients for the professional
             managed_relationships = Manages.query.filter_by(professional_id=sender_professional_id).all()
             recipients = [{'id': rel.subscriber_id, 'name': db.session.get(Subscriber, rel.subscriber_id).name, 'email': db.session.get(Subscriber, rel.subscriber_id).email, 'type': 'subscriber'} for rel in managed_relationships]
         else:
-            # Subscriber composing to their professional
             sender_professional_id = None
             sender_subscriber_id = session.get('user_id')
 
-            # Get the professional managing this subscriber
             relationship = Manages.query.filter_by(subscriber_id=sender_subscriber_id).first()
             if relationship:
                 professional = Professional.query.get(relationship.professional_id)
@@ -730,12 +714,9 @@ def create_app(test_config=None):
                 flash('All fields are required.', 'error')
                 return redirect(url_for('compose_message'))
 
-            # Send message based on recipient type
             if recipient_type == 'subscriber':
-                # Professional sending to subscriber
                 if not session.get('is_professional'):
                     abort(403)
-                # Verify relationship
                 relationship = Manages.query.filter_by(
                     professional_id=sender_professional_id,
                     subscriber_id=recipient_id
@@ -744,8 +725,8 @@ def create_app(test_config=None):
                     abort(403)
 
                 Message.create_new_message(
-                    sender_professional_id, None,  # sender is professional
-                    None, recipient_id,  # recipient is subscriber
+                    sender_professional_id, None,  
+                    None, recipient_id, 
                     subject, body
                 )
                 return redirect(url_for('view_conversation', other_professional_id=0, other_subscriber_id=recipient_id))
@@ -778,7 +759,6 @@ def create_app(test_config=None):
         prefill_recipient = None
         if prefill_recipient_professional_id and not session.get('is_professional'):
             prefill_recipient = Professional.query.get(prefill_recipient_professional_id)
-            # Verify this professional manages the subscriber
             if prefill_recipient:
                 relationship = Manages.query.filter_by(
                     professional_id=prefill_recipient_professional_id,
@@ -788,7 +768,6 @@ def create_app(test_config=None):
                     prefill_recipient = None
         elif prefill_recipient_subscriber_id and session.get('is_professional'):
             prefill_recipient = Subscriber.query.get(prefill_recipient_subscriber_id)
-            # Verify this is actually a client of the professional
             if prefill_recipient:
                 relationship = Manages.query.filter_by(
                     professional_id=sender_professional_id,

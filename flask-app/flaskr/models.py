@@ -401,7 +401,7 @@ class Message(db.Model):
 
     @classmethod
     def get_conversation(cls, user1_professional_id, user1_subscriber_id, user2_professional_id, user2_subscriber_id):
-        # Get messages between two users (either professional-subscriber or professional-professional)
+        # Get messages between two users
         return cls.query.filter(
             (
                 ((cls.sender_professional_id == user1_professional_id) & (cls.sender_subscriber_id == user1_subscriber_id) &

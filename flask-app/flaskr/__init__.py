@@ -37,6 +37,8 @@ def create_app(test_config=None):
     @app.before_request
     def check_login():
         allowed_routes = ['auth.login', 'auth.logout', 'auth.register', 'static']
+
+        # check if user is logged in, if the route they are accessign requires login then redirect to login page
         if 'user_id' not in session and request.endpoint not in allowed_routes:
             return redirect(url_for('auth.login'))
 
@@ -113,7 +115,7 @@ def create_app(test_config=None):
         meals_today = [m for m in all_meals_today if len(m.items) > 0]
 
         # Calculate nutrition score and calorie info to display to subscriber on dashboard
-        score = calorie_score = macro_score = None
+        score, calorie_score, macro_score = None, None, None
         nutrition_data = {}
         caloric_intake = 0
 
@@ -167,10 +169,8 @@ def create_app(test_config=None):
             if not subscriber:
                 return redirect(url_for('auth.login'))
 
-        all_meals = (
-            db.session.query(Meal)
-            .filter_by(diary_id=subscriber.diary_id)
-            .order_by(Meal.meal_time.desc())
+        all_meals = (db.session.query(Meal).filter_by(diary_id=subscriber.diary_id)\
+            .order_by(Meal.meal_time.desc())\
             .all()
         )
         meals = [m for m in all_meals if len(m.items) > 0]
@@ -180,6 +180,7 @@ def create_app(test_config=None):
     @app.route('/create_meal', methods=['GET'])
     def create_meal():
         # Allows subscribers to create new meals
+        # ensures user is logged in before creating meal
         subscriber = get_current_subscriber()
         if not subscriber:
             return redirect(url_for('auth.login'))
@@ -217,21 +218,28 @@ def create_app(test_config=None):
         # We experimented with different approaches and this combination seemed to provide good results in testing
         for food in all_foods:
             name_lower = food.food_name.lower()
+
             first_word = name_lower.split(',')[0].split()[0]
 
             base_score = max(
                 fuzz.WRatio(query, name_lower),
                 fuzz.token_sort_ratio(query, name_lower),
                 fuzz.token_set_ratio(query, name_lower)
-            )
-            first_word_boost = 40 if any(w == first_word for w in query_words) else 0
-            word_matches = sum(1 for w in query_words if w in name_lower)
+            ) # base score based on overall fuzzy match of query to name
+
+            first_word_boost = 40 if any(w == first_word for w in query_words) else 0 # boost score if word in search is first word of result
+
+            # add small boosts for any matching words
+            word_matches = sum(1 for w in query_words if w in name_lower) #
             word_boost = (word_matches / len(query_words)) * 15
+
+            # add base and all boosts for final score
             final_score = base_score + first_word_boost + word_boost
             scored.append((food, final_score))
 
+        # order by score 
         scored.sort(key=lambda x: x[1], reverse=True)
-        top = [(food, score) for food, score in scored if score >= 60][:10]
+        top = [(food, score) for food, score in scored if score >= 60][:10] # return first 10 results with score >=60
 
         return jsonify([{
             'food_id':   food.food_id,
@@ -256,7 +264,7 @@ def create_app(test_config=None):
         if not food_id or weight <= 0:
             return jsonify({'error': 'Invalid input'}), 400
 
-        MealItem.create_new_meal_item(meal_id, food_id, weight)
+        meal_item = MealItem.create_new_meal_item(meal_id, food_id, weight)
         return redirect(url_for('edit_meal', meal_id=meal_id))
 
     @app.route('/meal/<int:meal_id>/remove_item/<int:item_id>', methods=['POST'])
@@ -282,7 +290,7 @@ def create_app(test_config=None):
         subscriber = get_current_subscriber()
         if not subscriber or meal.diary_id != subscriber.diary_id:
             abort(403, 'Access denied')
-        flash('Meal saved successfully!', 'success')
+        flash ('Meal saved successfully!', 'success')
         return redirect(url_for('diary'))
 
     @app.route('/meal/<int:meal_id>/cancel', methods=['POST'])
@@ -296,7 +304,8 @@ def create_app(test_config=None):
     @app.route('/meal/<int:meal_id>/delete', methods=['POST'])
     def delete_meal(meal_id):
         # Users can delete meals from their diary and remove from favourites
-        meal = db.session.get(Meal, meal_id) or abort(404, 'Meal not found')
+        meal = db.session.get(Meal, meal_id) or abort(404)
+        # Ensure the meal belongs to the current subscriber
         subscriber = get_current_subscriber()
         if not subscriber or meal.diary_id != subscriber.diary_id:
             abort(403, 'Access denied')
@@ -341,7 +350,7 @@ def create_app(test_config=None):
         if not saved:
             abort(404, 'Favourite meal not found')
 
-        source_meal = db.session.get(Meal, meal_id) or abort(404)
+        source_meal = db.session.get(Meal, meal_id)
         if not source_meal:
             flash('Original meal no longer exists. Cannot quick add.', 'error')
             return redirect(url_for('favourites'))
@@ -400,7 +409,7 @@ def create_app(test_config=None):
             total_fat=total_fat,
             daily_goal=daily_goal,
             kcal_pct=kcal_pct,
-            can_comment=can_comment,
+            can_comment=can_comment
         )
 
     @app.route('/settings', methods=['GET', 'POST'])

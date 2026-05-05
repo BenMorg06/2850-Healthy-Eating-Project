@@ -622,10 +622,10 @@ def create_app(test_config=None):
                 message.mark_as_read()
 
         if other_professional_id:
-            other_person = Professional.query.get(other_professional_id)
+            other_person = db.session.get(Professional, other_professional_id)
             other_name = other_person.name if other_person else "Unknown Professional"
         else:
-            other_person = Subscriber.query.get(other_subscriber_id)
+            other_person = db.session.get(Subscriber, other_subscriber_id)
             other_name = other_person.name if other_person else "Unknown Client"
 
         return render_template('conversation.html',

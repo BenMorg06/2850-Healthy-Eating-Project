@@ -2,6 +2,7 @@ import pytest
 from flaskr import create_app
 from flaskr.extensions import db
 from flaskr.models import Message, Professional, Subscriber, Manages
+from flask import url_for
 from datetime import date, datetime
 from werkzeug.security import generate_password_hash
 
@@ -74,3 +75,41 @@ def logged_in_professional(client, professional, app):
     return client
 
 ### Tests
+
+class TestMessageRoute:
+    def test_messages_page_loads_for_subscriber(self, logged_in_subscriber):
+        response = logged_in_subscriber.get('/messages')
+        assert response.status_code == 200
+
+    def test_messages_page_loads_for_professional(self, logged_in_professional):
+        response = logged_in_professional.get('/messages')
+        assert response.status_code == 200
+
+    def test_redirects_to_login_if_not_authenticated(self, client):
+        response = client.get('/messages')
+        assert response.status_code == 302
+        assert '/login' in response.headers['Location']
+
+    def test_view_empty_coversation(self, logged_in_subscriber, professional):
+        response = logged_in_subscriber.get(f'/messages/{professional}/0')
+        assert response.status_code == 200
+
+    def test_view_conversation_with_messages(self, logged_in_subscriber, professional, app, client):
+        with client.session_transaction() as sess:
+            user_id = sess['user_id']
+
+        with app.app_context():
+            s = db.session.get(Subscriber, user_id)
+            Manages.create_management_relationship(professional, s.subscriber_id)
+            Message.create_new_message(
+                sender_professional_id=professional,
+                sender_subscriber_id=None,
+                recipient_professional_id=None,
+                recipient_subscriber_id=s.subscriber_id,
+                subject="Test Message",
+                body="Hello from the professional!"
+            )
+        
+        response = logged_in_subscriber.get(f'/messages/{professional}/0')
+        assert response.status_code == 200
+        assert b"Hello from the professional!" in response.data

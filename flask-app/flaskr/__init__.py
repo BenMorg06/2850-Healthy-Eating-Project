@@ -744,8 +744,8 @@ def create_app(test_config=None):
                     abort(403)
 
                 Message.create_new_message(
-                    None, sender_subscriber_id,  # sender is subscriber
-                    recipient_id, None,  # recipient is professional
+                    None, sender_subscriber_id,  
+                    recipient_id, None,  
                     subject, body
                 )
                 return redirect(url_for('view_conversation', other_professional_id=recipient_id, other_subscriber_id=0))

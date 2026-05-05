@@ -114,3 +114,63 @@ class TestConversation:
         response = logged_in_subscriber.get(f'/messages/{professional}/0')
         assert response.status_code == 200
         assert b"Hello from the professional!" in response.data
+
+class TestSendMessage:
+    def test_unauthenticated_send_returns_403(self, client, professional, subscriber):
+        response = client.post('/messages/send', data={
+            'recipient_professional_id': professional,
+            'recipient_subscriber_id': 0,
+            'subject': 'Hello',
+            'body': 'Hi there'
+        })
+        assert response.status_code == 302
+        assert response.headers['Location'] == '/login'
+ 
+    def test_subscriber_sends_to_managed_professional(self, app, logged_in_subscriber, professional, subscriber):
+        Manages.create_management_relationship(professional, subscriber)
+        response = logged_in_subscriber.post('/messages/send', data={
+            'recipient_professional_id': professional,
+            'recipient_subscriber_id': 0,
+            'sender_professional_id': 0,
+            'sender_subscriber_id': subscriber,
+            'subject': 'Test subject',
+            'body': 'Test body'
+        })
+        assert response.status_code == 302
+        msg = Message.query.first()
+        assert msg is not None
+        assert msg.subject == 'Test subject'
+        assert msg.sender_subscriber_id == subscriber
+ 
+    def test_professional_sends_to_managed_subscriber(self, app, logged_in_professional, professional, subscriber):
+        Manages.create_management_relationship(professional, subscriber)
+        response = logged_in_professional.post('/messages/send', data={
+            'recipient_professional_id': 0,
+            'recipient_subscriber_id': subscriber,
+            'subject': 'Dietary advice',
+            'body': 'Eat more greens'
+        })
+        assert response.status_code == 302
+        msg = Message.query.first()
+        assert msg is not None
+        assert msg.sender_professional_id == professional
+ 
+    def test_subscriber_blocked_without_relationship(self, app, logged_in_subscriber, professional, subscriber):
+        response = logged_in_subscriber.post('/messages/send', data={
+            'recipient_professional_id': professional,
+            'recipient_subscriber_id': 0,
+            'subject': 'Unauthorized',
+            'body': 'Should be blocked'
+        })
+        assert response.status_code == 403
+        assert Message.query.count() == 0
+ 
+    def test_professional_blocked_without_relationship(self, app, logged_in_professional, professional, subscriber):
+        response = logged_in_professional.post('/messages/send', data={
+            'recipient_professional_id': 0,
+            'recipient_subscriber_id': subscriber,
+            'subject': 'Unauthorized',
+            'body': 'Should be blocked'
+        })
+        assert response.status_code == 403
+        assert Message.query.count() == 0

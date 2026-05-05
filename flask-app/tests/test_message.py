@@ -90,6 +90,7 @@ class TestMessageRoute:
         assert response.status_code == 302
         assert '/login' in response.headers['Location']
 
+class TestConversation:
     def test_view_empty_coversation(self, logged_in_subscriber, professional):
         response = logged_in_subscriber.get(f'/messages/{professional}/0')
         assert response.status_code == 200

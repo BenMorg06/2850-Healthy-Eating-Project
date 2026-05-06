@@ -12,7 +12,10 @@ from flaskr.nutrition import calculate_bmr, calculate_caloric_need, \
 
 @pytest.fixture
 def app():
-    app = create_app({'TESTING': True, 'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:'})
+    app = create_app({
+        'TESTING': True,
+        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:'
+        })
     with app.app_context():
         db.create_all()
         yield app
@@ -44,7 +47,6 @@ def subscriber(app):
 
 @pytest.fixture
 def incomplete_subscriber(app):
-    """Subscriber missing sex/height/weight — caloric need cannot be calculated."""
     with app.app_context():
         s = Subscriber.create_new_subscriber(
             email='incomplete@example.com',
@@ -70,18 +72,46 @@ def logged_in_client(client, subscriber):
 # Helpers
 
 
-def make_food(app, kj=200, kcal=200, protein=10, carbs=30, fats=5, sugar=8, fibre=3):
+def make_food(
+        app,
+        kj=200,
+        kcal=200,
+        protein=10,
+        carbs=30,
+        fats=5,
+        sugar=8,
+        fibre=3
+        ):
     with app.app_context():
-        food = Food(food_id=1, food_name="Test Food", kj=kj, kcal=kcal, protein=protein, carbs=carbs, fats=fats, sugar=sugar, fibre=fibre)
+        food = Food(
+            food_id=1,
+            food_name="Test Food",
+            kj=kj,
+            kcal=kcal,
+            protein=protein,
+            carbs=carbs,
+            fats=fats,
+            sugar=sugar,
+            fibre=fibre
+            )
         db.session.add(food)
         db.session.commit()
         return food.food_id
 
 
-def make_meal_for_subscriber(app, subscriber_id, food_id, weight=100, meal_date=None):
+def make_meal_for_subscriber(
+        app,
+        subscriber_id,
+        food_id,
+        weight=100,
+        meal_date=None
+        ):
     with app.app_context():
         s = db.session.get(Subscriber, subscriber_id)
-        meal_time = datetime.combine(meal_date or date.today(), datetime.min.time())
+        meal_time = datetime.combine(
+            meal_date or date.today(),
+            datetime.min.time()
+            )
         meal = Meal(diary_id=s.diary_id, meal_time=meal_time)
         db.session.add(meal)
         db.session.flush()
@@ -113,7 +143,11 @@ class TestCalculateCaloricNeed:
             result = calculate_caloric_need(s)
             assert result is not None and result > 0
 
-    def test_returns_none_for_incomplete_subscriber(self, app, incomplete_subscriber):
+    def test_returns_none_for_incomplete_subscriber(
+            self,
+            app,
+            incomplete_subscriber
+            ):
         with app.app_context():
             s = db.session.get(Subscriber, incomplete_subscriber)
             assert calculate_caloric_need(s) is None
@@ -121,7 +155,15 @@ class TestCalculateCaloricNeed:
 
 class TestAggregateMealNutrition:
     def test_sums_correctly_for_100g(self, app, subscriber):
-        food_id = make_food(app, kcal=200, protein=10, carbs=30, fats=5, sugar=8, fibre=3)
+        food_id = make_food(
+            app,
+            kcal=200,
+            protein=10,
+            carbs=30,
+            fats=5,
+            sugar=8,
+            fibre=3
+            )
         make_meal_for_subscriber(app, subscriber, food_id, weight=100)
 
         with app.app_context():
@@ -137,7 +179,15 @@ class TestAggregateMealNutrition:
         assert result['fibre'] == 3
 
     def test_scales_by_weight(self, app, subscriber):
-        food_id = make_food(app, kcal=200, protein=10, carbs=30, fats=5, sugar=8, fibre=3)
+        food_id = make_food(
+            app,
+            kcal=200,
+            protein=10,
+            carbs=30,
+            fats=5,
+            sugar=8,
+            fibre=3
+            )
         make_meal_for_subscriber(app, subscriber, food_id, weight=50)
 
         with app.app_context():
@@ -149,22 +199,53 @@ class TestAggregateMealNutrition:
 
     def test_empty_meals_returns_zeros(self):
         result = aggregate_meal_nutrition([])
-        assert all(result[k] == 0 for k in ('calories', 'protein', 'carbs', 'fat', 'sugar', 'fibre'))
+        assert all(
+            result[k] == 0 for k in (
+                'calories',
+                'protein',
+                'carbs',
+                'fat',
+                'sugar',
+                'fibre'
+                )
+            )
 
 
 class TestCalculateDailyScore:
     def test_zero_calories_returns_all_zeros(self, app, subscriber):
         with app.app_context():
             s = db.session.get(Subscriber, subscriber)
-            nutrition = dict(calories=0, protein=0, carbs=0, fat=0, sugar=0, fibre=0)
-            score, calorie_score, macro_score = calculate_daily_score([], nutrition, s)
+            nutrition = dict(
+                calories=0,
+                protein=0,
+                carbs=0,
+                fat=0,
+                sugar=0,
+                fibre=0
+                )
+            score, calorie_score, macro_score = calculate_daily_score(
+                [], nutrition, s
+                )
         assert score == 0 and calorie_score == 0 and macro_score == 0
 
-    def test_incomplete_subscriber_returns_all_zeros(self, app, incomplete_subscriber):
+    def test_incomplete_subscriber_returns_all_zeros(
+            self,
+            app,
+            incomplete_subscriber
+            ):
         with app.app_context():
             s = db.session.get(Subscriber, incomplete_subscriber)
-            nutrition = dict(calories=2000, protein=80, carbs=250, fat=60, sugar=30, fibre=25)
-            score, calorie_score, macro_score = calculate_daily_score([], nutrition, s)
+            nutrition = dict(
+                calories=2000,
+                protein=80,
+                carbs=250,
+                fat=60,
+                sugar=30,
+                fibre=25
+                )
+            score, calorie_score, macro_score = calculate_daily_score(
+                [], nutrition, s
+                )
         assert score == 0 and calorie_score == 0 and macro_score == 0
 
     def test_meeting_caloric_need_scores_100_calories(self, app, subscriber):

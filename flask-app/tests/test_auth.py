@@ -146,14 +146,16 @@ class TestLogin:
         assert response.status_code == 200
         assert b'Invalid email or password' in response.data
 
-    def test_valid_login_sets_session_id(self, client):
-        response = client.post('/login', data={
+    def test_valid_login_sets_session_id(self, client, subscriber):
+        client.post('/login', data={
             'email': 'test@example.com',
             'password': 'testpass123',
             'form_type': 'login'
         }, follow_redirects=False)
 
-        assert response.status_code == 200
+        with client.session_transaction() as session:
+            assert 'user_id' in session
+            assert session['user_id'] is not None
 
     def test_login_with_invalid_email(self, client):
         response = client.post('/login', data={

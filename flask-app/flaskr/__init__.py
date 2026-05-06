@@ -13,7 +13,8 @@ from flaskr.nutrition import calculate_caloric_need, \
 
 
 def create_app(test_config=None):
-    # Base creation template adapted from Flask tutorial at https://flask.palletsprojects.com/en/2.3.x/tutorial/factory/
+    # Base creation template adapted from Flask tutorial
+    # https://flask.palletsprojects.com/en/2.3.x/tutorial/factory/
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
@@ -22,7 +23,8 @@ def create_app(test_config=None):
             'flaskr.sqlite'
             ),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        SERVER_NAME=None # Used for ngrok to allow hosting & multidevice testing
+        # Used for ngrok to allow hosting & multidevice testing
+        SERVER_NAME=None
     )
 
     if test_config is None:
@@ -86,16 +88,16 @@ def create_app(test_config=None):
             'fat': 27.5
         }
         targets = {}
-        # Use BMR & Caloric need calculations to build personalised macro targets for subscriber
-        # Based on percentage guidelines from WHO 
+        # Use BMR & Caloric need calculations to build
+        # personalised macro targets for subscriber
+        # Based on percentage guidelines from NHS
         for macro, pct in macro_targets_pct.items():
             target_cal = (pct / 100) * caloric_need
             grams_per_cal = {'carbs': 4, 'protein': 4, 'fat': 9}[macro]
             targets[macro] = round(target_cal / grams_per_cal, 1)
-        targets['sugar'] = 50   
-        targets['fibre'] = 25   
+        targets['sugar'] = 50
+        targets['fibre'] = 25
         return targets
- 
 
     def get_past_nutrition_scores(subscriber_id):
         # Return last 7 days of scores for subscriber
@@ -112,10 +114,11 @@ def create_app(test_config=None):
             'scores': [float(s.score) for s in recent_scores],
         }
 
-
     @app.route('/dashboard')
     def dashboard():
-        # Based on user type (subscriber vs professional) either show subscriber dashboard or redirect to professional dashboard
+        # Based on user type (subscriber vs professional)
+        # either show subscriber dashboard
+        # or redirect to professional dashboard
         if session.get('is_professional'):
             return redirect(url_for('professional_dashboard'))
 
@@ -126,12 +129,13 @@ def create_app(test_config=None):
         caloric_need = calculate_caloric_need(subscriber)
         macro_targets = get_subscriber_macro_needs(caloric_need)
 
-        # Load todays meals for subscriber to view 
+        # Load todays meals for subscriber to view
         today = date.today()
         all_meals_today = load_subscriber_meals_for_date(subscriber, today)
         meals_today = [m for m in all_meals_today if len(m.items) > 0]
 
-        # Calculate nutrition score and calorie info to display to subscriber on dashboard
+        # Calculate nutrition score and calorie info
+        # to display to subscriber on dashboard
         score, calorie_score, macro_score = None, None, None
         nutrition_data = {}
         caloric_intake = 0
@@ -142,8 +146,14 @@ def create_app(test_config=None):
             score, calorie_score, macro_score = calculate_daily_score(
                 meals_today, nutrition_data, subscriber
             )
-            # Create entry in NutritionScore tabel to save history and provide insight in future
-            save_nutrition_score(subscriber.subscriber_id, today, score, calorie_score, macro_score)
+            # Create entry in NutritionScore table to save history
+            # and provide insight in future
+            save_nutrition_score(
+                subscriber.subscriber_id,
+                today, score,
+                calorie_score,
+                macro_score
+                )
 
         # Fetch last 7 days of score for the weekly graph
         score_history = get_past_nutrition_scores(subscriber.subscriber_id)
@@ -168,7 +178,10 @@ def create_app(test_config=None):
 
         if client_id is not None:
             if not session.get('is_professional'):
-                abort(403, 'Professional account required to view client diaries.')
+                abort(
+                    403,
+                    'Professional account required to view client diaries.'
+                    )
 
             professional_id = session.get('user_id')
             relationship = Manages.query.filter_by(
@@ -186,10 +199,12 @@ def create_app(test_config=None):
             if not subscriber:
                 return redirect(url_for('auth.login'))
 
-        all_meals = (db.session.query(Meal).filter_by(diary_id=subscriber.diary_id)\
-            .order_by(Meal.meal_time.desc())\
+        all_meals = (
+            db.session.query(Meal)
+            .filter_by(diary_id=subscriber.diary_id)
+            .order_by(Meal.meal_time.desc())
             .all()
-        )
+            )
         meals = [m for m in all_meals if len(m.items) > 0]
 
         return render_template('diary.html', active_page='diary', meals=meals)
@@ -239,8 +254,11 @@ def create_app(test_config=None):
         query_words = set(query.split())
 
         scored = []
-        # Fuzzy search algorithm based on combination of first word matchhing, overall string similarity, and number of query words appearing in the food name
-        # We experimented with different approaches and this combination seemed to provide good results in testing
+        # Fuzzy search algorithm based on combination of
+        # first word matchhing, overall string similarity,
+        # and number of query words appearing in the food name
+        # We experimented with different approaches
+        # and this combination seemed to provide good results in testing
         for food in all_foods:
             name_lower = food.food_name.lower()
 
@@ -295,10 +313,13 @@ def create_app(test_config=None):
         if not food_id or weight <= 0:
             return jsonify({'error': 'Invalid input'}), 400
 
-        meal_item = MealItem.create_new_meal_item(meal_id, food_id, weight)
+        MealItem.create_new_meal_item(meal_id, food_id, weight)
         return redirect(url_for('edit_meal', meal_id=meal_id))
 
-    @app.route('/meal/<int:meal_id>/remove_item/<int:item_id>', methods=['POST'])
+    @app.route(
+            '/meal/<int:meal_id>/remove_item/<int:item_id>',
+            methods=['POST']
+            )
     def remove_meal_item(meal_id, item_id):
         # Allows subscribers to remove items from meals
         meal = db.session.get(Meal, meal_id) or abort(404, 'Meal not found')
@@ -316,17 +337,19 @@ def create_app(test_config=None):
 
     @app.route('/meal/<int:meal_id>/finish', methods=['POST'])
     def finish_meal(meal_id):
-        # When subscribers have finished adding to a meal they can confirm it and save it to their diary
+        # When subscribers have finished adding to a meal they can confirm it
+        # and save it to their diary
         meal = db.session.get(Meal, meal_id) or abort(404, 'Meal not found')
         subscriber = get_current_subscriber()
         if not subscriber or meal.diary_id != subscriber.diary_id:
             abort(403, 'Access denied')
-        flash ('Meal saved successfully!', 'success')
+        flash('Meal saved successfully!', 'success')
         return redirect(url_for('diary'))
 
     @app.route('/meal/<int:meal_id>/cancel', methods=['POST'])
     def cancel_meal(meal_id):
-        # Allow subscriber to cancel meal creation which deletes the meal and all associated items
+        # Allow subscriber to cancel meal creation which deletes the meal
+        # and all associated items
         meal = db.session.get(Meal, meal_id) or abort(404, 'Meal not found')
         meal.delete_meal()
         db.session.commit()
@@ -346,7 +369,8 @@ def create_app(test_config=None):
 
     @app.route('/meal/<int:meal_id>/favourite', methods=['POST'])
     def favourite_meal(meal_id):
-        # Subscribers can favourite meals to easily find and log again in the future
+        # Subscribers can favourite meals to easily find
+        # and log again in the future
         meal = db.session.get(Meal, meal_id) or abort(404, 'Meal not found')
         subscriber = get_current_subscriber()
         if not subscriber or meal.diary_id != subscriber.diary_id:
@@ -363,7 +387,8 @@ def create_app(test_config=None):
 
     @app.route('/favourites')
     def favourites():
-        # Renders page showing all favourited meals for subscriber with option to quick add them to their diary
+        # Renders page showing all favourited meals for subscriber with
+        # option to quick add them to their diary
         subscriber = get_current_subscriber()
         if not subscriber:
             return redirect(url_for('auth.login'))
@@ -469,7 +494,7 @@ def create_app(test_config=None):
 
     @app.route('/settings', methods=['GET', 'POST'])
     def settings():
-        # Subscribers can update settings that affect their nutrition score 
+        # Subscribers can update settings that affect their nutrition score
         # Height Weight Sex Activity Level
         if session.get('is_professional'):
             return redirect(url_for('professional_dashboard'))
@@ -479,9 +504,9 @@ def create_app(test_config=None):
             return redirect(url_for('auth.login'))
 
         if request.method == 'POST':
-            subscriber.height         = request.form.get('height', type=float)
-            subscriber.weight         = request.form.get('weight', type=float)
-            subscriber.sex            = request.form.get('sex')
+            subscriber.height = request.form.get('height', type=float)
+            subscriber.weight = request.form.get('weight', type=float)
+            subscriber.sex = request.form.get('sex')
             subscriber.activity_level = request.form.get('activity_level')
             db.session.commit()
             flash('Settings updated successfully!', 'success')
@@ -512,7 +537,7 @@ def create_app(test_config=None):
             abort(403)
 
         title = request.form.get('title', '').strip()
-        body  = request.form.get('body',  '').strip()
+        body = request.form.get('body',  '').strip()
         if not title or not body:
             flash('Title and comment body are required.', 'error')
             return redirect(url_for('view_meal', meal_id=meal_id))
@@ -547,8 +572,10 @@ def create_app(test_config=None):
 
     @app.route('/client/<int:client_id>')
     def view_client(client_id):
-        # Professionals can view their clients dashboard which shows their nutrition score, caloric intake, and meals for the day
-        # Professionals can monitor their clients progress and provide support and advice as needed.
+        # Professionals can view their clients dashboard which
+        # shows their nutrition score caloric intake, and meals for the day
+        # Professionals can monitor their clients progress
+        # and provide support and advice as needed.
         if not session.get('is_professional'):
             abort(403)
 
@@ -581,7 +608,13 @@ def create_app(test_config=None):
                 meals_today, nutrition_data, client
             )
             # Persist score so history chart has data
-            save_nutrition_score(client_id, today, score, calorie_score, macro_score)
+            save_nutrition_score(
+                client_id,
+                today,
+                score,
+                calorie_score,
+                macro_score
+                )
 
         score_history = get_past_nutrition_scores(client_id)
 
@@ -643,11 +676,15 @@ def create_app(test_config=None):
         if not professional_id and not subscriber_id:
             return redirect(url_for('auth.login'))
 
-        all_messages = Message.get_user_messages(professional_id, subscriber_id)
+        all_messages = Message.get_user_messages(
+            professional_id,
+            subscriber_id
+            )
 
         conversations = {}
         for message in all_messages:
-            if message.sender_professional_id == professional_id and message.sender_subscriber_id == subscriber_id:
+            if message.sender_professional_id == professional_id\
+                    and message.sender_subscriber_id == subscriber_id:
                 other_professional_id = message.recipient_professional_id
                 other_subscriber_id = message.recipient_subscriber_id
             else:
@@ -655,15 +692,20 @@ def create_app(test_config=None):
                 other_subscriber_id = message.sender_subscriber_id
 
             # Create conversation key
-            conv_key = f"{other_professional_id or 0}_{other_subscriber_id or 0}"
+            conv_key =\
+                f"{other_professional_id or 0}_{other_subscriber_id or 0}"
 
             if conv_key not in conversations:
                 if other_professional_id:
-                    other_person = Professional.query.get(other_professional_id)
-                    other_name = other_person.name if other_person else "Unknown Professional"
+                    other_person = Professional.query.get(
+                        other_professional_id
+                        )
+                    other_name = other_person.name\
+                        if other_person else "Unknown Professional"
                 else:
                     other_person = Subscriber.query.get(other_subscriber_id)
-                    other_name = other_person.name if other_person else "Unknown Client"
+                    other_name = other_person.name\
+                        if other_person else "Unknown Client"
 
                 conversations[conv_key] = {
                     'other_professional_id': other_professional_id,
@@ -674,18 +716,35 @@ def create_app(test_config=None):
                 }
 
             # Count unread messages
-            if not message.is_read and message.recipient_professional_id == professional_id and message.recipient_subscriber_id == subscriber_id:
+            if not message.is_read\
+                    and message.recipient_professional_id == professional_id\
+                    and message.recipient_subscriber_id == subscriber_id:
                 conversations[conv_key]['unread_count'] += 1
 
         # Sort conversations by last message time
-        conversations = dict(sorted(conversations.items(), key=lambda x: x[1]['last_message'].sent_at, reverse=True))
+        conversations = dict(sorted(
+            conversations.items(),
+            key=lambda x: x[1]['last_message'].sent_at,
+            reverse=True
+            ))
 
-        return render_template('messages.html', active_page='messages', conversations=conversations)
+        return render_template(
+            'messages.html',
+            active_page='messages',
+            conversations=conversations
+            )
 
-    @app.route('/messages/<int:other_professional_id>/<int:other_subscriber_id>')
-    def view_conversation(other_professional_id, other_subscriber_id):
-        other_professional_id = other_professional_id if other_professional_id != 0 else None
-        other_subscriber_id = other_subscriber_id if other_subscriber_id != 0 else None
+    @app.route(
+            '/messages/<int:other_professional_id>/<int:other_subscriber_id>'
+            )
+    def view_conversation(
+        other_professional_id,
+        other_subscriber_id
+            ):
+        other_professional_id = other_professional_id\
+            if other_professional_id != 0 else None
+        other_subscriber_id = other_subscriber_id\
+            if other_subscriber_id != 0 else None
 
         if session.get('is_professional'):
             professional_id = session.get('user_id')
@@ -703,17 +762,22 @@ def create_app(test_config=None):
         )
 
         for message in conversation_messages:
-            if message.recipient_professional_id == professional_id and message.recipient_subscriber_id == subscriber_id and not message.is_read:
+            if message.recipient_professional_id == professional_id\
+                    and message.recipient_subscriber_id == subscriber_id\
+                    and not message.is_read:
                 message.mark_as_read()
 
         if other_professional_id:
             other_person = db.session.get(Professional, other_professional_id)
-            other_name = other_person.name if other_person else "Unknown Professional"
+            other_name = other_person.name\
+                if other_person else "Unknown Professional"
         else:
             other_person = db.session.get(Subscriber, other_subscriber_id)
-            other_name = other_person.name if other_person else "Unknown Client"
+            other_name = other_person.name\
+                if other_person else "Unknown Client"
 
-        return render_template('conversation.html',
+        return render_template(
+            'conversation.html',
             active_page='messages',
             messages=conversation_messages,
             other_professional_id=other_professional_id,
@@ -733,8 +797,14 @@ def create_app(test_config=None):
         if not sender_professional_id and not sender_subscriber_id:
             abort(403)
 
-        recipient_professional_id = request.form.get('recipient_professional_id', type=int)
-        recipient_subscriber_id = request.form.get('recipient_subscriber_id', type=int)
+        recipient_professional_id = request.form.get(
+            'recipient_professional_id',
+            type=int
+            )
+        recipient_subscriber_id = request.form.get(
+            'recipient_subscriber_id',
+            type=int
+            )
         subject = request.form.get('subject', '').strip()
         body = request.form.get('body', '').strip()
 
@@ -765,7 +835,8 @@ def create_app(test_config=None):
         )
 
         flash('Message sent successfully.', 'success')
-        return redirect(url_for('view_conversation',
+        return redirect(url_for(
+            'view_conversation',
             other_professional_id=recipient_professional_id or 0,
             other_subscriber_id=recipient_subscriber_id or 0
         ))
@@ -776,16 +847,31 @@ def create_app(test_config=None):
             sender_professional_id = session.get('user_id')
             sender_subscriber_id = None
 
-            managed_relationships = Manages.query.filter_by(professional_id=sender_professional_id).all()
-            recipients = [{'id': rel.subscriber_id, 'name': db.session.get(Subscriber, rel.subscriber_id).name, 'email': db.session.get(Subscriber, rel.subscriber_id).email, 'type': 'subscriber'} for rel in managed_relationships]
+            managed_relationships = Manages.query.filter_by(
+                professional_id=sender_professional_id
+                ).all()
+            recipients = [{
+                'id': rel.subscriber_id,
+                'name': db.session.get(Subscriber, rel.subscriber_id).name,
+                'email': db.session.get(Subscriber, rel.subscriber_id).email,
+                'type': 'subscriber'
+            } for rel in managed_relationships]
         else:
             sender_professional_id = None
             sender_subscriber_id = session.get('user_id')
 
-            relationship = Manages.query.filter_by(subscriber_id=sender_subscriber_id).first()
+            relationship = Manages.query.filter_by(
+                subscriber_id=sender_subscriber_id
+                ).first()
             if relationship:
-                professional = Professional.query.get(relationship.professional_id)
-                recipients = [{'id': professional.professional_id, 'name': professional.name, 'email': professional.email, 'type': 'professional'}] if professional else []
+                professional = Professional.query.get(
+                    relationship.professional_id
+                    )
+                recipients = [{
+                    'id': professional.professional_id,
+                    'name': professional.name,
+                    'email': professional.email,
+                    'type': 'professional'}] if professional else []
             else:
                 recipients = []
 
@@ -795,7 +881,8 @@ def create_app(test_config=None):
             subject = request.form.get('subject', '').strip()
             body = request.form.get('body', '').strip()
 
-            if not recipient_type or not recipient_id or not subject or not body:
+            if not recipient_type or not recipient_id\
+                    or not subject or not body:
                 flash('All fields are required.', 'error')
                 return redirect(url_for('compose_message'))
 
@@ -810,11 +897,15 @@ def create_app(test_config=None):
                     abort(403)
 
                 Message.create_new_message(
-                    sender_professional_id, None,  
-                    None, recipient_id, 
+                    sender_professional_id, None,
+                    None, recipient_id,
                     subject, body
                 )
-                return redirect(url_for('view_conversation', other_professional_id=0, other_subscriber_id=recipient_id))
+                return redirect(url_for(
+                    'view_conversation',
+                    other_professional_id=0,
+                    other_subscriber_id=recipient_id
+                    ))
 
             elif recipient_type == 'professional':
                 # Subscriber sending to professional
@@ -829,21 +920,34 @@ def create_app(test_config=None):
                     abort(403)
 
                 Message.create_new_message(
-                    None, sender_subscriber_id,  
-                    recipient_id, None,  
+                    None, sender_subscriber_id,
+                    recipient_id, None,
                     subject, body
                 )
-                return redirect(url_for('view_conversation', other_professional_id=recipient_id, other_subscriber_id=0))
+                return redirect(url_for(
+                    'view_conversation',
+                    other_professional_id=recipient_id,
+                    other_subscriber_id=0
+                    ))
 
             flash('Message sent successfully.', 'success')
 
         # Pre-fill recipient if specified in URL params
-        prefill_recipient_professional_id = request.args.get('recipient_professional_id', type=int)
-        prefill_recipient_subscriber_id = request.args.get('recipient_subscriber_id', type=int)
+        prefill_recipient_professional_id = request.args.get(
+            'recipient_professional_id',
+            type=int
+            )
+        prefill_recipient_subscriber_id = request.args.get(
+            'recipient_subscriber_id',
+            type=int
+            )
 
         prefill_recipient = None
-        if prefill_recipient_professional_id and not session.get('is_professional'):
-            prefill_recipient = Professional.query.get(prefill_recipient_professional_id)
+        if prefill_recipient_professional_id\
+                and not session.get('is_professional'):
+            prefill_recipient = Professional.query.get(
+                prefill_recipient_professional_id
+                )
             if prefill_recipient:
                 relationship = Manages.query.filter_by(
                     professional_id=prefill_recipient_professional_id,
@@ -851,8 +955,11 @@ def create_app(test_config=None):
                 ).first()
                 if not relationship:
                     prefill_recipient = None
-        elif prefill_recipient_subscriber_id and session.get('is_professional'):
-            prefill_recipient = Subscriber.query.get(prefill_recipient_subscriber_id)
+        elif prefill_recipient_subscriber_id\
+                and session.get('is_professional'):
+            prefill_recipient = Subscriber.query.get(
+                prefill_recipient_subscriber_id
+                )
             if prefill_recipient:
                 relationship = Manages.query.filter_by(
                     professional_id=sender_professional_id,
@@ -861,10 +968,11 @@ def create_app(test_config=None):
                 if not relationship:
                     prefill_recipient = None
 
-        return render_template('compose_message.html',
+        return render_template(
+            'compose_message.html',
             active_page='messages',
             recipients=recipients,
             prefill_recipient=prefill_recipient
-        )
+            )
 
     return app

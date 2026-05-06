@@ -54,6 +54,10 @@ a {
     min-height: 100vh;
 }
 
+.app-shell.no-sidebar {
+    grid-template-columns: 1fr;
+}
+
 .sidebar {
     background: var(--green);
     color: #fff;
@@ -415,6 +419,104 @@ a {
     inset: 0;
     width: 100%;
     height: 100%;
+}
+
+.auth-body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0;
+    background: var(--bg);
+}
+
+.auth-wrapper {
+    width: min(100%, 980px);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    background: #fff;
+}
+
+.auth-left {
+    padding: 30px;
+    background: linear-gradient(135deg, #f6f9f2 0%, #e6efdd 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+}
+
+.auth-right {
+    padding: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+}
+
+.auth-tab-row {
+    display: flex;
+    border-bottom: 1px solid #ebece9;
+    margin-bottom: 20px;
+}
+
+.auth-tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    border-bottom: 2px solid transparent;
+    color: var(--text);
+    font-weight: 700;
+}
+
+.auth-tab.active {
+    border-color: var(--green);
+    color: var(--green-dark);
+}
+
+.auth-form {
+    display: grid;
+    gap: 14px;
+}
+
+.auth-form h2 {
+    margin: 0;
+}
+
+.auth-submit {
+    border: none;
+    background: var(--green);
+    color: #fff;
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.auth-bottom-link {
+    text-align: center;
+    margin-top: 10px;
+}
+
+@media (max-width: 900px) {
+    .auth-wrapper {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-left {
+        display: none;
+    }
+
+    .auth-right {
+        padding: 20px;
+    }
 }
 
 .line-chart polyline {
@@ -1187,3 +1289,4 @@ label {
   width: 100%;
   height: 320px;
 }
+}.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }

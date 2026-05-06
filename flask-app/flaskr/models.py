@@ -30,8 +30,9 @@ class Subscriber(db.Model):
     pswd_hash = db.Column(db.String(128), nullable=False)
     sex = db.Column(db.String(10), nullable=False)
     date_of_birth = db.Column(db.Date, nullable=False)
-    height = db.Column(db.Float, nullable=False)
-    weight = db.Column(db.Float, nullable=False)
+    height = db.Column(db.Float, nullable=True)
+    weight = db.Column(db.Float, nullable=True)
+    activity_level = db.Column(db.String(20), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     diary_id = db.Column(db.Integer, db.ForeignKey('food_diary.diary_id'), nullable=True)
 
@@ -43,9 +44,11 @@ class Subscriber(db.Model):
     managed_by = db.relationship('Manages', backref='subscriber')
 
     # Subscriber CRUD methods
+    def get_id(self):
+        return str(self.subscriber_id)
 
     @classmethod
-    def create_new_subscriber(cls, email, name, address, pswd_hash, sex, date_of_birth, height, weight):
+    def create_new_subscriber(cls, email, name, address, pswd_hash, sex, date_of_birth, height=None, weight=None):
         new_subscriber = cls(
             email=email,
             name=name,
@@ -83,7 +86,7 @@ class Meal(db.Model):
     # Define Meal relationships
     items = db.relationship('MealItem', backref='meals', cascade='all, delete-orphan')
     comments = db.relationship('Comment', backref='meal')
-    saved_by = db.relationship('SavedMeal', backref='meal')
+    saved_by = db.relationship('SavedMeal', backref='meal', cascade='all, delete-orphan')
 
     @classmethod
     def create_new_meal(cls, diary_id, meal_time):
@@ -166,6 +169,29 @@ class SavedMeal(db.Model):
     meal_id = db.Column(db.Integer, db.ForeignKey('meal.meal_id'), nullable=False)
     saved_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
+    @classmethod
+    def create_new_saved_meal(cls, subscriber_id, meal_id, meal_name):
+        existing = cls.query.filter_by(subscriber_id=subscriber_id, meal_id=meal_id).first()
+        if existing:
+            return existing
+        new_saved = cls(subscriber_id=subscriber_id, meal_id=meal_id, meal_name=meal_name)
+        db.session.add(new_saved)
+        db.session.commit()
+        return new_saved
+
+    @classmethod
+    def get_by_subscriber(cls, subscriber_id):
+        return cls.query.join(Meal).filter(cls.subscriber_id==subscriber_id).order_by(cls.saved_at.desc()).all()
+
+    @classmethod
+    def delete_saved_meal(cls, subscriber_id, meal_id):
+        saved = cls.query.filter_by(subscriber_id=subscriber_id, meal_id=meal_id).first()
+        if saved:
+            db.session.delete(saved)
+            db.session.commit()
+            return True
+        return False
+
 #  Professional
 class Professional(db.Model):
     # Define Professional columns from db diagram
@@ -174,7 +200,7 @@ class Professional(db.Model):
     name = db.Column(db.String(120), nullable=False)
     address = db.Column(db.String(200), nullable=False)
     pswd_hash = db.Column(db.String(128), nullable=False)
-    profession = db.Column(db.String(120), nullable=False)
+    profession = db.Column(db.String(120), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
     # Define Professional relationships
@@ -183,7 +209,7 @@ class Professional(db.Model):
 
     # CRUD methods for Professional
     @classmethod
-    def create_new_professional(cls, email, name, address, pswd_hash, profession):
+    def create_new_professional(cls, email, name, address, pswd_hash, profession=None):
         new_professional = cls(
             email=email,
             name=name,
@@ -315,3 +341,27 @@ class RecipeRating(db.Model):
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=True)
     rated_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+# Nutrition Score
+class NutritionScore(db.Model):
+    # Define NutritionScore columns from db diagram
+    nutrition_score_id = db.Column(db.Integer, primary_key=True)
+    subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    score = db.Column(db.Float, nullable=False)
+    calorie_score = db.Column(db.Float, nullable=False)
+    macro_score = db.Column(db.Float, nullable=False)
+    calculated_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    @classmethod
+    def create_new_score(cls, subscriber_id, date, score, calorie_score, macro_score):
+        new_score = cls(
+            subscriber_id=subscriber_id,
+            date=date,
+            score=score,
+            calorie_score=calorie_score,
+            macro_score=macro_score
+        )
+        db.session.add(new_score)
+        db.session.commit()
+        return new_score

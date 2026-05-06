@@ -70,7 +70,6 @@ def logged_in_client(client, subscriber):
 ### Helpers
 
 def make_food(app, kj=200, kcal=200, protein=10, carbs=30, fats=5, sugar=8, fibre=3):
-    """Insert a Food row and return its id."""
     with app.app_context():
         food = Food(food_id=1, food_name="Test Food", kj=kj, kcal=kcal, protein=protein, carbs=carbs, fats=fats, sugar=sugar, fibre=fibre)
         db.session.add(food)
@@ -79,7 +78,6 @@ def make_food(app, kj=200, kcal=200, protein=10, carbs=30, fats=5, sugar=8, fibr
  
  
 def make_meal_for_subscriber(app, subscriber_id, food_id, weight=100, meal_date=None):
-    """Insert a Meal + MealItem for the given subscriber and return the meal id."""
     with app.app_context():
         s = db.session.get(Subscriber, subscriber_id)
         meal_time = datetime.combine(meal_date or date.today(), datetime.min.time())
@@ -201,7 +199,7 @@ class TestDashboard:
     def test_renders_for_logged_in_subscriber(self, logged_in_client):
         response = logged_in_client.get('/dashboard')
         assert response.status_code == 200
-        assert b'Daily Calorie Needs' in response.data
+        assert b'Daily Summary' in response.data
  
     def test_score_absent_without_meals(self, logged_in_client):
         response = logged_in_client.get('/dashboard')

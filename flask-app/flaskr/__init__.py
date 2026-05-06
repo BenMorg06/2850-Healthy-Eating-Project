@@ -5,7 +5,7 @@ from flask import Flask, abort, jsonify, render_template, \
     request, session, redirect, url_for, flash
 from rapidfuzz import fuzz
 from flaskr.models import Comment, Food, MealItem, Subscriber, \
-    Meal, Professional, Manages, SavedMeal
+    Meal, Professional, Manages, SavedMeal, Message, NutritionScore
 from flaskr.extensions import db, migrate
 from flaskr.nutrition import calculate_caloric_need, \
     load_subscriber_meals_for_date, aggregate_meal_nutrition, \

@@ -3,36 +3,86 @@
 {% block title %}Diary – Healthy Dietary System{% endblock %}
 
 {% block content %}
-<section class="dashboard-card metrics-card">
-  <div class="metrics-card-header">
-    <h3>Weekly Nutrition Metrics (Monday to Sunday)</h3>
-    <div class="streak-card">
-      <span class="streak-icon">🔥</span>
-      <div class="streak-text">
-        <strong id="streak-count">0</strong>
-        <small>day streak</small>
-      </div>
+<div class="diary-page">
+  <div class="top-bar">
+    <h2 class="page-title">Today's Diary</h2>
+    <div class="streak-pill">
+      <span class="streak-fire">🔥</span>
+      <strong class="streak-num" id="streak-count">0</strong>
+      <span class="streak-label">day streak</span>
     </div>
   </div>
 
-  <div class="metric-filters">
-    <label><input type="checkbox" class="metric-toggle" value="calories" checked> Calories</label>
-    <label><input type="checkbox" class="metric-toggle" value="fat" checked> Fat</label>
-    <label><input type="checkbox" class="metric-toggle" value="protein" checked> Protein</label>
-    <label><input type="checkbox" class="metric-toggle" value="carbs" checked> Carbs</label>
+  <!-- Summary stat cards -->
+  <p class="section-label">Daily summary</p>
+  <div class="summary-grid">
+    {% if caloric_intake %}
+    <div class="stat-card">
+      <div class="val">{{ caloric_intake | round(0) | int }}</div>
+      <div class="lbl">kcal consumed</div>
+      {% if caloric_need %}<div class="sub">of {{ caloric_need | round(0) | int }} needed</div>{% endif %}
+    </div>
+    {% endif %}
+    {% if score %}
+    <div class="stat-card">
+      <div class="val">{{ score | round(0) | int }}</div>
+      <div class="lbl">nutrition score</div>
+      <div class="sub">out of 100</div>
+    </div>
+    {% endif %}
   </div>
 
-  <div class="chart-wrap">
-    <canvas id="weeklyMetricsChart"></canvas>
+  <!-- Weekly chart -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <p class="section-label" style="margin:0">Weekly metrics (Mon–Sun)</p>
+      <div class="metric-filters">
+        <label class="metric-toggle-label"><input type="checkbox" class="metric-toggle" value="calories" checked> Calories</label>
+        <label class="metric-toggle-label"><input type="checkbox" class="metric-toggle" value="fat" checked> Fat</label>
+        <label class="metric-toggle-label"><input type="checkbox" class="metric-toggle" value="protein" checked> Protein</label>
+        <label class="metric-toggle-label"><input type="checkbox" class="metric-toggle" value="carbs" checked> Carbs</label>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="weeklyMetricsChart"></canvas>
+    </div>
+    <div id="daily-amounts"></div>
   </div>
 
-  <div id="daily-amounts"></div>
-</section>
+  <!-- Today's macros -->
+  {% if nutrition_data %}
+  <p class="section-label">Today's macros</p>
+  <div class="macro-card">
+    {% set macros = [
+      ('Carbs',   nutrition_data.carbs,   macro_targets.carbs,   '#378ADD'),
+      ('Protein', nutrition_data.protein, macro_targets.protein, '#1D9E75'),
+      ('Fat',     nutrition_data.fat,     macro_targets.fat,     '#D85A30'),
+      ('Sugar',   nutrition_data.sugar,   macro_targets.sugar,   '#E24B4A'),
+      ('Fibre',   nutrition_data.fibre,   macro_targets.fibre,   '#888780'),
+    ] %}
+    {% for name, consumed, target, color in macros %}
+    {% set pct = [((consumed / target) * 100) | round(0) | int, 100] | min %}
+    <div class="macro-row">
+      <span class="macro-name">{{ name }}</span>
+      <div class="macro-bar-wrap">
+        <div class="macro-bar" style="width:{{ pct }}%; background:{{ color }};"></div>
+      </div>
+      <span class="macro-vals">
+        <strong>{{ consumed | round(1) }}g</strong>
+        {% if name == 'Sugar' %} / &lt;{{ target }}g
+        {% else %} / {{ target }}g{% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 
-<section class="dashboard-card feedback-card">
-  <h3>How you’re doing vs NHS guidance</h3>
-  <ul id="nhsFeedbackList"></ul>
-</section>
+  <!-- NHS feedback -->
+  <p class="section-label">NHS guidance check</p>
+  <div class="feedback-card">
+    <ul id="nhsFeedbackList" style="list-style:none; padding:0;"></ul>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/dashboard-metrics.js') }}"></script>

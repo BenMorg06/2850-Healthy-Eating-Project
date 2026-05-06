@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from flask import Blueprint, render_template, jsonify
 from flask_login import login_required, current_user
-from flaskr import db
+from flaskr.extensions import db
 from flaskr.models import Subscriber, Meal, MealItem
 
 dashboard_bp = Blueprint("dashboard", __name__)

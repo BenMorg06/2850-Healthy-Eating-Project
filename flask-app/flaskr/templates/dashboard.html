@@ -1,75 +1,89 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard – Healthy Dietary System{% endblock %}
+{% block title %}Diary – Healthy Dietary System{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="page-heading">
-        <h1>Dashboard</h1>
+<div class="diary-page">
+  <div class="top-bar">
+    <h2 class="page-title">Today's Diary</h2>
+    <div class="streak-pill">
+      <span class="streak-fire">🔥</span>
+      <strong class="streak-num" id="streak-count">0</strong>
+      <span class="streak-label">day streak</span>
     </div>
-    
-    <div class="dashboard-grid">
-        {% if caloric_need %}
-        <div class="card stat-card">
-            <div>
-                <h3>Daily Calorie Needs</h3>
-                <p>{{ caloric_need | round(0) }} kcal</p>
-                <p>{{ caloric_intake | round(0) }} kcal consumed</p>
-            </div>
-        </div>
-        {% endif %}
-        
-        {% if score %}
-        <div class="card stat-card">
-            <div>
-                <h3>Today's Nutrition Score</h3>
-                <p>{{ score | round(0) }}/100</p>
-                <small>Calories: {{ calorie_score | round(0) }}/100<br>Macros: {{ macro_score | round(0) }}/100</small>
-            </div>
-        </div>
-        {% endif %}
-        
-        {% if nutrition_data %}
-        <div class="card">
-            <h3>Today's Macros</h3>
-            <table class="macro-table">
-                <thead>
-                    <tr>
-                        <th>Nutrient</th>
-                        <th>Consumed</th>
-                        <th>Recommended</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Carbs (g)</td>
-                        <td>{{ nutrition_data.carbs | round(1) }}</td>
-                        <td>{{ macro_targets.carbs }}</td>
-                    </tr>
-                    <tr>
-                        <td>Protein (g)</td>
-                        <td>{{ nutrition_data.protein | round(1) }}</td>
-                        <td>{{ macro_targets.protein }}</td>
-                    </tr>
-                    <tr>
-                        <td>Fat (g)</td>
-                        <td>{{ nutrition_data.fat | round(1) }}</td>
-                        <td>{{ macro_targets.fat }}</td>
-                    </tr>
-                    <tr>
-                        <td>Sugar (g)</td>
-                        <td>{{ nutrition_data.sugar | round(1) }}</td>
-                        <td>&lt; {{ macro_targets.sugar }}</td>
-                    </tr>
-                    <tr>
-                        <td>Fibre (g)</td>
-                        <td>{{ nutrition_data.fibre | round(1) }}</td>
-                        <td>{{ macro_targets.fibre }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
+  </div>
+
+  <!-- Summary stat cards -->
+  <p class="section-label">Daily Summary</p>
+  <div class="summary-grid">
+    {% if caloric_intake %}
+    <div class="stat-card">
+      <div class="val">{{ caloric_intake | round(0) | int }}</div>
+      <div class="lbl">kcal consumed</div>
+      {% if caloric_need %}<div class="sub">of {{ caloric_need | round(0) | int }} needed</div>{% endif %}
     </div>
+    {% endif %}
+    {% if score %}
+    <div class="stat-card">
+      <div class="val">{{ score | round(0) | int }}</div>
+      <div class="lbl">Nutrition Score</div>
+      <div class="sub">out of 100</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Weekly chart -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <p class="section-label" style="margin:0">Weekly metrics (Mon–Sun)</p>
+      <div class="metric-filters">
+        <label class="metric-toggle-label"><input type="checkbox" class="metric-toggle" value="calories" checked> Calories</label>
+        <label class="metric-toggle-label"><input type="checkbox" class="metric-toggle" value="fat" checked> Fat</label>
+        <label class="metric-toggle-label"><input type="checkbox" class="metric-toggle" value="protein" checked> Protein</label>
+        <label class="metric-toggle-label"><input type="checkbox" class="metric-toggle" value="carbs" checked> Carbs</label>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="weeklyMetricsChart"></canvas>
+    </div>
+    <div id="daily-amounts"></div>
+  </div>
+
+  <!-- Today's macros -->
+  {% if nutrition_data %}
+  <p class="section-label">Today's macros</p>
+  <div class="macro-card">
+    {% set macros = [
+      ('Carbs',   nutrition_data.carbs,   macro_targets.carbs,   '#378ADD'),
+      ('Protein', nutrition_data.protein, macro_targets.protein, '#1D9E75'),
+      ('Fat',     nutrition_data.fat,     macro_targets.fat,     '#D85A30'),
+      ('Sugar',   nutrition_data.sugar,   macro_targets.sugar,   '#E24B4A'),
+      ('Fibre',   nutrition_data.fibre,   macro_targets.fibre,   '#888780'),
+    ] %}
+    {% for name, consumed, target, color in macros %}
+    {% set pct = [((consumed / target) * 100) | round(0) | int, 100] | min %}
+    <div class="macro-row">
+      <span class="macro-name">{{ name }}</span>
+      <div class="macro-bar-wrap">
+        <div class="macro-bar" style="width:{{ pct }}%; background:{{ color }};"></div>
+      </div>
+      <span class="macro-vals">
+        <strong>{{ consumed | round(1) }}g</strong>
+        {% if name == 'Sugar' %} / &lt;{{ target }}g
+        {% else %} / {{ target }}g{% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- NHS feedback -->
+  <p class="section-label">NHS guidance check</p>
+  <div class="feedback-card">
+    <ul id="nhsFeedbackList" style="list-style:none; padding:0;"></ul>
+  </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard-metrics.js') }}"></script>
 {% endblock %}

@@ -1,0 +1,81 @@
+/* ...existing code... */
+
+.metrics-card,
+.feedback-card {
+  margin-top: 1rem;
+}
+
+.feedback-card {
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+#daily-amounts {
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.highlight-red {
+  color: red;
+  font-weight: bold;
+}
+
+.metric-filters {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.metrics-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.metrics-card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.streak-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #f8fbf6;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin-left: auto;
+}
+
+.streak-icon {
+  font-size: 1.35rem;
+}
+
+.streak-text {
+  text-align: right;
+  line-height: 1.1;
+}
+
+.streak-text strong {
+  display: block;
+  font-size: 1.2rem;
+}
+
+.streak-text small {
+  color: var(--muted);
+}
+
+.chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 320px;
+}
+
+/* ...existing code... */

@@ -1,5 +1,5 @@
-
 from datetime import date
+
 
 def calculate_daily_score(meals, nutrition_data, subscriber):
     '''
@@ -12,60 +12,78 @@ def calculate_daily_score(meals, nutrition_data, subscriber):
     caloric_need = calculate_caloric_need(subscriber)
     if caloric_need is None or nutrition_data['calories'] == 0:
         return 0, 0, 0
-    
+
     # Calorie score with penalty for excess
     actual_cal = nutrition_data['calories']
     if actual_cal <= caloric_need:
         calorie_score = (actual_cal / caloric_need) * 100
     else:
-        calorie_score = max(0, 200 - (actual_cal / caloric_need) * 100)  # Penalty for overeating
-    
+        # Penalty for overeating
+        calorie_score = max(0, 200 - (actual_cal / caloric_need) * 100)
+
     # Macro targets: middle of ranges * caloric_need
     macro_targets_pct = {
-        'carbs': 55,    # middle of 45-65
-        'protein': 17.5, # middle of 10-35
-        'fat': 27.5     # middle of 20-35
+        'carbs': 55,  # middle of 45-65
+        'protein': 17.5,  # middle of 10-35
+        'fat': 27.5  # middle of 20-35
     }
-    
+
     macro_scores = []
     for macro, mid_pct in macro_targets_pct.items():
         target_cal = (mid_pct / 100) * caloric_need
         grams_per_cal = {'carbs': 4, 'protein': 4, 'fat': 9}[macro]
         target_grams = target_cal / grams_per_cal
-        
+
         actual_grams = nutrition_data[macro]
-        excess_ratio = (actual_grams - target_grams) / target_grams if target_grams > 0 else 0
+        if target_grams > 0:
+            excess_ratio = (actual_grams - target_grams) / target_grams
+        else:
+            excess_ratio = 0
         if excess_ratio > 0:
             score = max(0, 100 - (excess_ratio * 50))
         else:
-            score = (actual_grams / target_grams) * 100 if target_grams > 0 else 0
+            if target_grams > 0:
+                score = (actual_grams / target_grams) * 100
+            else:
+                score = 0
         macro_scores.append(score)
-    
+
     # Sugar penalty: max 50g recommended
     sugar_limit = 50
     actual_sugar = nutrition_data['sugar']
     if actual_sugar > sugar_limit:
-        sugar_penalty = min(50, (actual_sugar - sugar_limit) / sugar_limit * 50)  # Up to 50 points penalty
+        sugar_penalty = min(
+            50,
+            (actual_sugar - sugar_limit) / sugar_limit * 50
+            )
         macro_scores.append(max(0, 100 - sugar_penalty))
     else:
         macro_scores.append(100)
-    
+
     macro_score = sum(macro_scores) / len(macro_scores)
     nutrition_score = 0.5 * calorie_score + 0.5 * macro_score  # Equal weight
-    return round(nutrition_score, 1), round(calorie_score, 1), round(macro_score, 1)
+    return round(nutrition_score, 1), \
+        round(calorie_score, 1), \
+        round(macro_score, 1)
+
 
 def calculate_bmr(subscriber):
-    age = subscriber.date_of_birth and (date.today().year - subscriber.date_of_birth.year)
-    if age is None or subscriber.height is None or subscriber.weight is None or subscriber.sex is None:
+    age = subscriber.date_of_birth and\
+        (date.today().year - subscriber.date_of_birth.year)
+    if age is None or subscriber.height is None\
+            or subscriber.weight is None or subscriber.sex is None:
         return None
     if subscriber.sex == 'Male':
-        bmr = 66.5 + (13.75 * subscriber.weight) + (5 * subscriber.height) - (6.75 * age)
+        bmr = 66.5 + (13.75 * subscriber.weight)\
+            + (5 * subscriber.height) - (6.75 * age)
         return bmr
     elif subscriber.sex == 'Female':
-        bmr = 655.1 + (9.6 * subscriber.weight) + (1.8 * subscriber.height) - (4.7 * age)
+        bmr = 655.1 + (9.6 * subscriber.weight)\
+            + (1.8 * subscriber.height) - (4.7 * age)
         return bmr
     else:
         return None
+
 
 def calculate_caloric_need(subscriber):
     bmr = calculate_bmr(subscriber)
@@ -82,10 +100,12 @@ def calculate_caloric_need(subscriber):
     caloric_need = bmr * multiplier
     return caloric_need
 
+
 def load_subscriber_meals_for_date(subscriber, date):
     from flaskr.models import Meal
     meals = Meal.query.filter_by(diary_id=subscriber.diary_id).all()
-    return [meal for meal in meals if meal.meal_time.date() == date] # This needs work as meal_time is not just date
+    return [meal for meal in meals if meal.meal_time.date() == date]
+
 
 def aggregate_meal_nutrition(meals):
     total_calories = 0
@@ -110,13 +130,24 @@ def aggregate_meal_nutrition(meals):
         'carbs': total_carbs,
         'fat': total_fat,
         'sugar': total_sugar,
-        'fibre': total_fibre,
+        'fibre': total_fibre
     }
+
 
 def update_nutrition_score(subscriber, date):
     from flaskr.models import NutritionScore
     meals = load_subscriber_meals_for_date(subscriber, date)
     nutrition_data = aggregate_meal_nutrition(meals)
-    nutrition_score, calorie_score, macro_score = calculate_daily_score(meals, nutrition_data, subscriber)
-    NutritionScore.create_new_score(subscriber.subscriber_id, date, nutrition_score, calorie_score, macro_score)
+    nutrition_score, calorie_score, macro_score = calculate_daily_score(
+        meals,
+        nutrition_data,
+        subscriber
+        )
+    NutritionScore.create_new_score(
+        subscriber.subscriber_id,
+        date,
+        nutrition_score,
+        calorie_score,
+        macro_score
+        )
     return nutrition_score

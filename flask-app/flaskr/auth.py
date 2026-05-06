@@ -1,10 +1,12 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, session
+from flask import Blueprint, render_template, redirect, \
+    url_for, request, flash, session
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 from .models import Subscriber, Professional
 import re
 
 auth_bp = Blueprint('auth', __name__)
+
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -16,8 +18,9 @@ def login():
 
     if request.method == 'POST':
         if request.form.get('form_type') == 'register':
-            # handle register post - prevent professional self-registration for now
-            return register()  # call the register function to handle registration
+            # handle register post
+            # call the register function
+            return register()
 
         email = request.form.get('email')
         password = request.form.get('password')
@@ -29,24 +32,31 @@ def login():
         if user and check_password_hash(user.pswd_hash, password):
             session['user_id'] = user.subscriber_id
             flash('Login successful', 'success')
-            return redirect(url_for('home')) # send logged in user to home page
+            # send logged in user to home page
+            return redirect(url_for('home'))
 
-        # if not found in subscribers, check professionals (allows professionals to log in through same form)
+        # if not found in subscribers
+        # check professionals (professionals can log in with same form)
         if not user:
             user = Professional.query.filter_by(email=email).first()
-        
+
         if user and check_password_hash(user.pswd_hash, password):
             session['user_id'] = user.professional_id
-            session['is_professional'] = True  # set a flag in the session to indicate this is a professional user
+            # set a flag in the session to indicate this is a professional user
+            session['is_professional'] = True
             flash('Login successful as professional', 'success')
-            return redirect(url_for('home')) # send logged in user to home page
+            # send logged in user to home page
+            return redirect(url_for('home'))
 
-        flash('Invalid email or password') # if login fails, show error and stay on login page
+        # if login fails, show error and stay on login page
+        flash('Invalid email or password')
 
-    # show the auth page for failed logins 
-    return render_template('auth.html', active_tab=active_tab) 
+    # show the auth page for failed logins
+    return render_template('auth.html', active_tab=active_tab)
 
-# If user is logged in already redirect them to home otherwise show login page
+
+# If user is logged in already
+# redirect them to home otherwise show login page
 @auth_bp.route('/auth')
 def auth_page():
     if session.get('user_id'):
@@ -54,6 +64,7 @@ def auth_page():
 
     tab = request.args.get('tab', 'login')
     return render_template('auth.html', active_tab=tab)
+
 
 # allow new users to register
 @auth_bp.route('/register', methods=['POST'])
@@ -72,9 +83,14 @@ def register():
         flash('Invalid email format', 'error')
         return redirect(url_for('auth.auth_page', tab='register'))
 
-    # validate all fields are present 
-    if not email or not password or not confirm_password or not address or not sex or not dob_str or not name:
-        flash('All registration fields are required.', 'error')
+    # validate all fields are present
+    if not email or not password\
+            or not confirm_password\
+            or not address\
+            or not sex\
+            or not dob_str\
+            or not name:
+        flash('Allregistration fields are required.', 'error')
         return redirect(url_for('auth.auth_page', tab='register'))
 
     # validates passwords match
@@ -109,7 +125,8 @@ def register():
             profession=None
         )
         session['user_id'] = new_user.professional_id
-        session['is_professional'] = True  # set a flag in the session to indicate user is professional
+        # set a flag in the session to indicate user is professional
+        session['is_professional'] = True
 
     else:
         # creates new user in database
@@ -120,14 +137,15 @@ def register():
             pswd_hash=password_hash,
             sex=sex,
             date_of_birth=date_of_birth,
-            height = None,
-            weight = None
+            height=None,
+            weight=None
         )
 
         # logs new user in and redirects to home page
         session['user_id'] = new_user.subscriber_id
     flash('Registration successful, you are now logged in', 'success')
     return redirect(url_for('dashboard'))
+
 
 # logs user out by clearing session and redirecting to login page
 @auth_bp.route('/logout')

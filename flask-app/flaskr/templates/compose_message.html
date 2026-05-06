@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Compose Message – Healthy Dietary System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-heading">
+        <h1>Compose Message</h1>
+        <a href="{{ url_for('messages') }}" style="color: var(--muted); text-decoration: none;">← Back to Messages</a>
+    </div>
+
+    <div class="compose-form-container">
+        <form method="POST" class="compose-form">
+            <div class="form-group">
+                <label for="recipient">To:</label>
+                <select name="recipient_id" id="recipient" required onchange="updateRecipientType()">
+                    <option value="">Select a recipient...</option>
+                    {% for recipient in recipients %}
+                    <option value="{{ recipient.id }}" data-type="{{ recipient.type }}" {% if prefill_recipient and ((prefill_recipient.professional_id if recipient.type == 'professional' else prefill_recipient.subscriber_id) == recipient.id) %}selected{% endif %}>
+                        {{ recipient.name }} ({{ recipient.email }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="recipient_type" id="recipient_type" value="">
+            </div>
+
+            <div class="form-group">
+                <label for="subject">Subject:</label>
+                <input type="text" name="subject" id="subject" required maxlength="200"
+                       placeholder="Enter message subject...">
+            </div>
+
+            <div class="form-group">
+                <label for="body">Message:</label>
+                <textarea name="body" id="body" required rows="10"
+                          placeholder="Write your message here..."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="tiny-blue big-btn">Send Message</button>
+                <a href="{{ url_for('messages') }}" class="cancel-btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.compose-form-container {
+    max-width: 800px;
+    margin: 20px auto;
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.compose-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.form-group select,
+.form-group input[type="text"],
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.form-group select:focus,
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 150px;
+    font-family: inherit;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.cancel-btn {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 12px 20px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+    background: var(--bg);
+    color: var(--text);
+}
+
+@media (max-width: 768px) {
+    .compose-form-container {
+        margin: 20px;
+        padding: 20px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .cancel-btn {
+        text-align: center;
+    }
+}
+</style>
+
+{% block scripts %}
+<script>
+function updateRecipientType() {
+    const select = document.getElementById('recipient');
+    const hiddenInput = document.getElementById('recipient_type');
+    const selectedOption = select.options[select.selectedIndex];
+
+    if (selectedOption && selectedOption.value) {
+        hiddenInput.value = selectedOption.getAttribute('data-type');
+    } else {
+        hiddenInput.value = '';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateRecipientType();
+});
+</script>
+{% endblock %}
+{% endblock %}

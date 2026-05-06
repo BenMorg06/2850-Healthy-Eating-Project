@@ -24,6 +24,9 @@
             <a href="{{ url_for('dashboard') }}" class="side-btn {% if active_page == 'dashboard' %}active{% endif %}">
                 <span>🏠</span><span>Dashboard</span>
             </a>
+            <a href="{{ url_for('messages') }}" class="side-btn {% if active_page == 'messages' %}active{% endif %}">
+                <span>✉️</span><span>Messages</span>
+            </a>
             <a href="{{ url_for('favourites') }}" class="side-btn {% if active_page == 'favourites' %}active{% endif %}">
                 <span>❤️</span><span>Favourite</span>
             </a>
@@ -37,6 +40,9 @@
             {% if session.get('is_professional') %}
             <a href="{{ url_for('professional_dashboard') }}" class="side-btn {% if active_page == 'professional' %}active{% endif %}">
                 <span>👨‍⚕️</span><span>Professional</span>
+            </a>
+            <a href="{{ url_for('messages') }}" class="side-btn {% if active_page == 'messages' %}active{% endif %}">
+                <span>✉️</span><span>Messages</span>
             </a>
             {% endif %}
             {% if not session.get('is_professional') %}

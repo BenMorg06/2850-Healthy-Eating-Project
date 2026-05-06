@@ -9,7 +9,7 @@ from flaskr.models import Comment, Food, MealItem, Subscriber, \
 from flaskr.extensions import db, migrate
 from flaskr.nutrition import calculate_caloric_need, \
     load_subscriber_meals_for_date, aggregate_meal_nutrition, \
-    calculate_daily_score
+    calculate_daily_score, save_nutrition_score
 
 
 def create_app(test_config=None):
@@ -112,10 +112,6 @@ def create_app(test_config=None):
             'scores': [float(s.score) for s in recent_scores],
         }
 
-    @app.route('/')
-    def home():
-        # By default send users to dashboard
-        return dashboard()
 
     @app.route('/dashboard')
     def dashboard():

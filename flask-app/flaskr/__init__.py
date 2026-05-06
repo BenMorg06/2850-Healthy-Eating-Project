@@ -619,8 +619,6 @@ def create_app(test_config=None):
                     professional_id=session['user_id'],
                     subscriber_id=existing_client.subscriber_id
                 )
-                flash('This subscriber is now linked to your profile.', 'success')
-                    )
                 flash(
                     'This subscriber is now linked to your profile.',
                     'success'

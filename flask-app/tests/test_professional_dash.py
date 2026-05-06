@@ -39,16 +39,15 @@ def subscriber(app):
         )
         return s.subscriber_id
 
+
 @pytest.fixture
-def logged_in_client(client, subscriber, app):
-    with app.app_context():
-        s = db.session.get(Subscriber, subscriber)
-    
+def logged_in_client(client, subscriber):
     with client.session_transaction() as session:
-        session['user_id'] = subscriber   
+        session['user_id'] = subscriber
         session['_fresh'] = True
-    
+
     return client
+
 
 @pytest.fixture
 def professional(app):
@@ -62,13 +61,15 @@ def professional(app):
             profession=None
         )
         return p.professional_id
-    
+
+
 @pytest.fixture
 def logged_in_professional(client, professional):
     with client.session_transaction() as sess:
         sess['user_id'] = professional
         sess['is_professional'] = True
     return client
+
 
 @pytest.fixture
 def subscriber_meal(app, subscriber):
@@ -77,45 +78,79 @@ def subscriber_meal(app, subscriber):
         meal = Meal.create_new_meal(diary_id, meal_time=datetime.now())
         return meal.meal_id
 
+
 class TestProfessionalFeatures:
-    """Tests professional-specific features like client management."""
-    
-    def test_professional_can_invite_existing_client(self, logged_in_professional, app, subscriber, professional):
-        response = logged_in_professional.post('/invite_client', data={'client_email': 'test@example.com'}, follow_redirects=True)
- 
+    def test_professional_can_invite_existing_client(
+            self,
+            logged_in_professional,
+            app,
+            subscriber,
+            professional
+            ):
+        response = logged_in_professional.post(
+            '/invite_client',
+            data={'client_email': 'test@example.com'},
+            follow_redirects=True
+            )
+
         assert response.status_code == 200
-        assert b'This subscriber is now linked to your profile' in response.data
- 
+        assert b'This subscriber is now linked to your profile'\
+            in response.data
+
         with app.app_context():
             manages = Manages.get_by_professional(professional_id=professional)
         assert manages is not None
         assert subscriber in [m.subscriber_id for m in manages]
 
-    def test_professional_invite_non_existing_client_flashes_error(self, client, professional):
+    def test_professional_invite_non_existing_client_flashes_error(
+            self,
+            client,
+            professional
+            ):
         with client.session_transaction() as sess:
             sess['user_id'] = professional
             sess['is_professional'] = True
-        
-        response = client.post('/invite_client', data={'client_email': 'nonexistent@example.com'}, follow_redirects=True)
-        
-        assert response.status_code == 200
-        assert b'No subscriber found with email nonexistent@example.com' in response.data
 
-    def test_professional_can_view_client_diary(self, client, app, professional, subscriber):
+        response = client.post(
+            '/invite_client',
+            data={'client_email': 'nonexistent@example.com'},
+            follow_redirects=True
+            )
+
+        assert response.status_code == 200
+        assert b'No subscriber found with email nonexistent@example.com'\
+            in response.data
+
+    def test_professional_can_view_client_diary(
+            self,
+            client,
+            app,
+            professional,
+            subscriber
+            ):
         with client.session_transaction() as sess:
             sess['user_id'] = professional
             sess['is_professional'] = True
-        
-        Manages.create_management_relationship(professional_id=professional, subscriber_id=subscriber)
+
+        Manages.create_management_relationship(
+            professional_id=professional,
+            subscriber_id=subscriber
+            )
 
         response = client.get(f'/diary?client_id={subscriber}')
         assert response.status_code == 200
 
-    def test_professional_cannot_view_non_client_diary(self, client, app, professional, subscriber):        
+    def test_professional_cannot_view_non_client_diary(
+            self,
+            client,
+            app,
+            professional,
+            subscriber
+            ):
         with client.session_transaction() as sess:
             sess['user_id'] = professional
             sess['is_professional'] = True
-        
+
         response = client.get(f'/diary?client_id={subscriber}')
         assert response.status_code == 403
 
@@ -123,17 +158,34 @@ class TestProfessionalFeatures:
         response = logged_in_client.get('/diary?client_id=1')
         assert response.status_code == 403
 
-    def test_professional_can_view_client_meal(self, client, app, professional, subscriber, subscriber_meal):
+    def test_professional_can_view_client_meal(
+            self,
+            client,
+            app,
+            professional,
+            subscriber,
+            subscriber_meal
+            ):
         with client.session_transaction() as sess:
             sess['user_id'] = professional
             sess['is_professional'] = True
 
-        Manages.create_management_relationship(professional_id=professional, subscriber_id=subscriber)
+        Manages.create_management_relationship(
+            professional_id=professional,
+            subscriber_id=subscriber
+            )
 
         response = client.get(f'/meal/{subscriber_meal}/view')
         assert response.status_code == 200
 
-    def test_professional_cannot_view_non_client_meal(self, client, app, professional, subscriber, subscriber_meal):
+    def test_professional_cannot_view_non_client_meal(
+            self,
+            client,
+            app,
+            professional,
+            subscriber,
+            subscriber_meal
+            ):
         with client.session_transaction() as sess:
             sess['user_id'] = professional
             sess['is_professional'] = True
@@ -141,16 +193,29 @@ class TestProfessionalFeatures:
         response = client.get(f'/meal/{subscriber_meal}/view')
         assert response.status_code == 403
 
-    def test_professional_can_comment_on_client_meal(self, client, app, professional, subscriber, subscriber_meal):
+    def test_professional_can_comment_on_client_meal(
+            self,
+            client,
+            app,
+            professional,
+            subscriber,
+            subscriber_meal
+            ):
         with client.session_transaction() as sess:
             sess['user_id'] = professional
             sess['is_professional'] = True
 
-        Manages.create_management_relationship(professional_id=professional, subscriber_id=subscriber)
+        Manages.create_management_relationship(
+            professional_id=professional,
+            subscriber_id=subscriber
+            )
 
         response = client.post(
             f'/meal/{subscriber_meal}/comment',
-            data={'title': 'Good balance', 'body': 'Try to keep protein high in the afternoon.'},
+            data={
+                'title': 'Good balance',
+                'body': 'Try to keep protein high in the afternoon.'
+                },
             follow_redirects=True
         )
 
@@ -163,9 +228,19 @@ class TestProfessionalFeatures:
             assert comment.title == 'Good balance'
             assert comment.body == 'Try to keep protein high in the afternoon.'
 
-    def test_subscriber_can_see_professional_comment(self, logged_in_client, app, professional, subscriber, subscriber_meal):
+    def test_subscriber_can_see_professional_comment(
+            self,
+            logged_in_client,
+            app,
+            professional,
+            subscriber,
+            subscriber_meal
+            ):
         with app.app_context():
-            Manages.create_management_relationship(professional_id=professional, subscriber_id=subscriber)
+            Manages.create_management_relationship(
+                professional_id=professional,
+                subscriber_id=subscriber
+                )
             Comment.create_new_comment(
                 meal_id=subscriber_meal,
                 professional_id=professional,
@@ -175,16 +250,27 @@ class TestProfessionalFeatures:
 
         response = logged_in_client.get(f'/meal/{subscriber_meal}/view')
         assert response.status_code == 200
-        assert b'Drink a glass of water before your next meal.' in response.data
+        assert b'Drink a glass of water before your next meal.'\
+            in response.data
 
-    def test_professional_cannot_comment_on_non_client_meal(self, client, app, professional, subscriber, subscriber_meal):
+    def test_professional_cannot_comment_on_non_client_meal(
+            self,
+            client,
+            app,
+            professional,
+            subscriber,
+            subscriber_meal
+            ):
         with client.session_transaction() as sess:
             sess['user_id'] = professional
             sess['is_professional'] = True
 
         response = client.post(
             f'/meal/{subscriber_meal}/comment',
-            data={'title': 'Unauthorized', 'body': 'You should not be able to comment.'},
+            data={
+                'title': 'Unauthorized',
+                'body': 'You should not be able to comment.'
+                },
             follow_redirects=True
         )
 

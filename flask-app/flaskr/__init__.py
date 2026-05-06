@@ -1,17 +1,26 @@
 from datetime import date, datetime
 import os
-from flask import Flask, abort, app, jsonify, render_template, request, session, redirect, url_for, flash
-from rapidfuzz import process, fuzz
-from flaskr.models import Comment, Food, MealItem, Subscriber, Meal, Professional, Manages, SavedMeal, NutritionScore, Message
+from flaskr.routes.dashboard import dashboard_bp
+from flask import Flask, abort, jsonify, render_template, \
+    request, session, redirect, url_for, flash
+from rapidfuzz import fuzz
+from flaskr.models import Comment, Food, MealItem, Subscriber, \
+    Meal, Professional, Manages, SavedMeal
 from flaskr.extensions import db, migrate
-from flaskr.nutrition import calculate_caloric_need, load_subscriber_meals_for_date, aggregate_meal_nutrition, calculate_daily_score, save_nutrition_score
+from flaskr.nutrition import calculate_caloric_need, \
+    load_subscriber_meals_for_date, aggregate_meal_nutrition, \
+    calculate_daily_score
+
 
 def create_app(test_config=None):
     # Base creation template adapted from Flask tutorial at https://flask.palletsprojects.com/en/2.3.x/tutorial/factory/
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
-        SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'flaskr.sqlite'),
+        SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(
+            app.instance_path,
+            'flaskr.sqlite'
+            ),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SERVER_NAME=None # Used for ngrok to allow hosting & multidevice testing
     )
@@ -28,7 +37,6 @@ def create_app(test_config=None):
     migrate.init_app(app, db)
 
     with app.app_context():
-        from flaskr import models
         from flaskr.auth import auth_bp
         app.register_blueprint(auth_bp)
         db.create_all()
@@ -36,12 +44,25 @@ def create_app(test_config=None):
     # Make sure subscribers and professionals are sent to log in first
     @app.before_request
     def check_login():
-        allowed_routes = ['auth.login', 'auth.logout', 'auth.register', 'static']
+        # define routes that don't require login
+        allowed_routes = [
+            'auth.login',
+            'auth.logout',
+            'auth.register',
+            'static'
+            ]
 
-        # check if user is logged in, if the route they are accessign requires login then redirect to login page
+        # check if user is logged in,
+        # if the route they are accessign requires login
+        # then redirect to login page
         if 'user_id' not in session and request.endpoint not in allowed_routes:
             return redirect(url_for('auth.login'))
 
+    @app.route('/')
+    def home():
+        return dashboard()
+
+    # esnure user is logged in to view homepage
     def get_current_subscriber():
         if session.get('is_professional'):
             return None
@@ -185,7 +206,10 @@ def create_app(test_config=None):
         if not subscriber:
             return redirect(url_for('auth.login'))
 
-        meal = Meal.create_new_meal(subscriber.diary_id, meal_time=datetime.now())
+        meal = Meal.create_new_meal(
+            subscriber.diary_id,
+            meal_time=datetime.now()
+            )
         return redirect(url_for('edit_meal', meal_id=meal.meal_id))
 
     @app.route('/meal/<int:meal_id>/edit')
@@ -196,7 +220,12 @@ def create_app(test_config=None):
         if not subscriber or meal.diary_id != subscriber.diary_id:
             abort(403, 'Access denied')
         items = MealItem.get_by_meal(meal_id)
-        return render_template('create_meal.html', active_page='diary', meal=meal, items=items)
+        return render_template(
+            'create_meal.html',
+            active_page='diary',
+            meal=meal,
+            items=items
+            )
 
     @app.route('/meal/<int:meal_id>/search', methods=['GET'])
     def search_food(meal_id):
@@ -225,21 +254,27 @@ def create_app(test_config=None):
                 fuzz.WRatio(query, name_lower),
                 fuzz.token_sort_ratio(query, name_lower),
                 fuzz.token_set_ratio(query, name_lower)
-            ) # base score based on overall fuzzy match of query to name
+            )
+            # base score based on overall fuzzy match of query to name
 
-            first_word_boost = 40 if any(w == first_word for w in query_words) else 0 # boost score if word in search is first word of result
+            # boost score if word in search is first word of result
+            if any(w == first_word for w in query_words):
+                first_word_boost = 40
+            else:
+                first_word_boost = 0
 
             # add small boosts for any matching words
-            word_matches = sum(1 for w in query_words if w in name_lower) #
+            word_matches = sum(1 for w in query_words if w in name_lower)
             word_boost = (word_matches / len(query_words)) * 15
 
             # add base and all boosts for final score
             final_score = base_score + first_word_boost + word_boost
             scored.append((food, final_score))
 
-        # order by score 
+        # order by score
         scored.sort(key=lambda x: x[1], reverse=True)
-        top = [(food, score) for food, score in scored if score >= 60][:10] # return first 10 results with score >=60
+        # return first 10 results with score >=60
+        top = [(food, score) for food, score in scored if score >= 60][:10]
 
         return jsonify([{
             'food_id':   food.food_id,
@@ -322,7 +357,11 @@ def create_app(test_config=None):
             abort(403, 'Access denied')
 
         meal_name = meal.meal_time.strftime('%d %b %Y – %H:%M')
-        SavedMeal.create_new_saved_meal(subscriber.subscriber_id, meal_id, meal_name)
+        SavedMeal.create_new_saved_meal(
+            subscriber.subscriber_id,
+            meal_id,
+            meal_name
+            )
         flash('Meal added to favourites.', 'success')
         return redirect(url_for('diary'))
 
@@ -334,7 +373,11 @@ def create_app(test_config=None):
             return redirect(url_for('auth.login'))
 
         saved_meals = SavedMeal.get_by_subscriber(subscriber.subscriber_id)
-        return render_template('favourites.html', active_page='favourites', saved_meals=saved_meals)
+        return render_template(
+            'favourites.html',
+            active_page='favourites',
+            saved_meals=saved_meals
+            )
 
     @app.route('/favourites/quick_add/<int:meal_id>', methods=['POST'])
     def quick_add_favourite_meal(meal_id):
@@ -355,9 +398,16 @@ def create_app(test_config=None):
             flash('Original meal no longer exists. Cannot quick add.', 'error')
             return redirect(url_for('favourites'))
 
-        new_meal = Meal.create_new_meal(subscriber.diary_id, meal_time=datetime.now())
+        new_meal = Meal.create_new_meal(
+            subscriber.diary_id,
+            meal_time=datetime.now()
+            )
         for item in source_meal.items:
-            MealItem.create_new_meal_item(new_meal.meal_id, item.food_id, item.weight)
+            MealItem.create_new_meal_item(
+                new_meal.meal_id,
+                item.food_id,
+                item.weight
+                )
 
         flash('Favourite meal added to your diary.', 'success')
         return redirect(url_for('diary'))
@@ -373,7 +423,8 @@ def create_app(test_config=None):
             if meal.diary_id != subscriber.diary_id:
                 abort(403)
         elif professional:
-            meal_owner = Subscriber.query.filter_by(diary_id=meal.diary_id).first()
+            meal_owner = Subscriber.query.filter_by(
+                diary_id=meal.diary_id).first()
             if not meal_owner:
                 abort(404)
             relationship = Manages.query.filter_by(
@@ -389,13 +440,21 @@ def create_app(test_config=None):
         items = MealItem.get_by_meal(meal_id)
         comments = Comment.get_by_meal(meal_id)
 
-        total_kcal    = round(sum((i.food.kcal    / 100) * i.weight for i in items), 1)
-        total_protein = round(sum((i.food.protein / 100) * i.weight for i in items), 1)
-        total_carbs   = round(sum((i.food.carbs   / 100) * i.weight for i in items), 1)
-        total_fat     = round(sum((i.food.fats    / 100) * i.weight for i in items), 1)
+        total_kcal = round(
+            sum((i.food.kcal / 100) * i.weight for i in items), 1
+            )
+        total_protein = round(
+            sum((i.food.protein / 100) * i.weight for i in items), 1
+            )
+        total_carbs = round(
+            sum((i.food.carbs / 100) * i.weight for i in items), 1
+            )
+        total_fat = round(
+            sum((i.food.fats / 100) * i.weight for i in items), 1
+            )
 
         daily_goal = 2000
-        kcal_pct   = min(round((total_kcal / daily_goal) * 100), 100)
+        kcal_pct = min(round((total_kcal / daily_goal) * 100), 100)
 
         return render_template(
             'meal_view.html',
@@ -410,7 +469,7 @@ def create_app(test_config=None):
             daily_goal=daily_goal,
             kcal_pct=kcal_pct,
             can_comment=can_comment
-        )
+            )
 
     @app.route('/settings', methods=['GET', 'POST'])
     def settings():
@@ -432,7 +491,11 @@ def create_app(test_config=None):
             flash('Settings updated successfully!', 'success')
             return redirect(url_for('settings'))
 
-        return render_template('settings.html', active_page='settings', subscriber=subscriber)
+        return render_template(
+            'settings.html',
+            active_page='settings',
+            subscriber=subscriber
+            )
 
     @app.route('/meal/<int:meal_id>/comment', methods=['POST'])
     def add_comment(meal_id):
@@ -458,7 +521,12 @@ def create_app(test_config=None):
             flash('Title and comment body are required.', 'error')
             return redirect(url_for('view_meal', meal_id=meal_id))
 
-        Comment.create_new_comment(meal_id, professional.professional_id, title, body)
+        Comment.create_new_comment(
+            meal_id,
+            professional.professional_id,
+            title,
+            body
+            )
         flash('Comment added successfully.', 'success')
         return redirect(url_for('view_meal', meal_id=meal_id))
 
@@ -467,10 +535,13 @@ def create_app(test_config=None):
         if not session.get('is_professional'):
             flash('Access denied. Professional account required.', 'error')
             return redirect(url_for('dashboard'))
+        if session.get('is_professional'):
+            professional_id = session.get('user_id')
 
-        professional_id = session.get('user_id')
-        managed_relationships = Manages.query.filter_by(professional_id=professional_id).all()
-        clients = [db.session.get(Subscriber, rel.subscriber_id) for rel in managed_relationships]
+        managed_relationships = Manages.query.filter_by(
+            professional_id=professional_id).all()
+        clients = [db.session.get(
+            Subscriber, rel.subscriber_id) for rel in managed_relationships]
 
         return render_template(
             'professional_dashboard.html',
@@ -541,19 +612,30 @@ def create_app(test_config=None):
 
         if request.method == 'POST':
             client_email = request.form.get('client_email')
-            existing_client = Subscriber.query.filter_by(email=client_email).first()
+            existing_client = Subscriber.query.filter_by(
+                email=client_email).first()
             if existing_client:
                 Manages.create_management_relationship(
                     professional_id=session['user_id'],
                     subscriber_id=existing_client.subscriber_id
                 )
                 flash('This subscriber is now linked to your profile.', 'success')
+                    )
+                flash(
+                    'This subscriber is now linked to your profile.',
+                    'success'
+                    )
                 return redirect(url_for('professional_dashboard'))
 
             flash(f'No subscriber found with email {client_email}.', 'error')
             return redirect(url_for('invite_client'))
 
-        return render_template('invite_client.html', active_page='professional')
+        return render_template(
+            'invite_client.html',
+            active_page='professional'
+            )
+
+    app.register_blueprint(dashboard_bp)
 
     @app.route('/messages')
     def messages():

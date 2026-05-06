@@ -1,6 +1,5 @@
-from flaskr import create_app, db
+from flaskr import create_app
 from flaskr.models import Food
-import pandas as pd
 
 app = create_app()
 

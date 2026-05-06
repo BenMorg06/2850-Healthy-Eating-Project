@@ -165,7 +165,7 @@ class TestSearchResults:
             self,
             logged_in_client,
             meal_id,
-            food_d
+            food_db
             ):
         response = logged_in_client.get(f'/meal/{meal_id}/search?q=salm')
         data = response.get_json()

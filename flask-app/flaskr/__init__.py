@@ -169,6 +169,14 @@ def create_app(test_config=None):
             nutrition_data=nutrition_data,
             score_history=score_history,
         )
+    def get_visible_meals(subscriber):
+        if not subscriber:
+            return []
+
+        all_meals = db.session.query(Meal).filter_by(diary_id=subscriber.diary_id)\
+                .order_by(Meal.meal_time.desc())\
+                .all()
+        return [m for m in all_meals if len(m.items) > 0]
 
     @app.route('/diary')
     def diary():
@@ -200,13 +208,7 @@ def create_app(test_config=None):
             if not subscriber:
                 return redirect(url_for('auth.login'))
 
-        all_meals = (
-            db.session.query(Meal)
-            .filter_by(diary_id=subscriber.diary_id)
-            .order_by(Meal.meal_time.desc())
-            .all()
-            )
-        meals = [m for m in all_meals if len(m.items) > 0]
+        meals = get_visible_meals(subscriber)
 
         return render_template(
             'diary.html',
@@ -215,6 +217,39 @@ def create_app(test_config=None):
             is_professional=is_professional
             )
 
+    @app.route('/grocery_list')
+    def grocery_list():
+        client_id = request.args.get('client_id', type=int)
+
+        if client_id is not None:
+            if not session.get('is_professional'):
+                abort(403)
+
+            professional_id = session.get('user_id')
+            relationship = Manages.query.filter_by(
+                professional_id=professional_id,
+                subscriber_id=client_id
+            ).first()
+            if not relationship:
+                abort(403)
+
+            subscriber = db.session.get(Subscriber, client_id)
+            if not subscriber:
+                abort(404)
+        else:
+            subscriber = get_current_subscriber()
+            if not subscriber:
+                return redirect(url_for('auth.login'))
+
+        meals = get_visible_meals(subscriber)
+        return render_template('grocery_list.html', active_page='grocery_list', meals=meals)
+    
+    @app.route('/dashboard')
+    def dashboard():
+        if session.get('is_professional'):
+            return redirect(url_for('professional_dashboard'))
+        return render_template('dashboard.html')
+    
     @app.route('/create_meal', methods=['GET'])
     def create_meal():
         # Allows subscribers to create new meals

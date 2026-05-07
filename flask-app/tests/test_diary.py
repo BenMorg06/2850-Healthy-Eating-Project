@@ -50,6 +50,19 @@ def test_diary_page_loads(logged_in_client):
     response = logged_in_client.get('/diary')
     assert response.status_code == 200
 
+def test_grocery_list_page_loads_saved_meals(app, logged_in_client, subscriber):
+    with app.app_context():
+        s = db.session.get(Subscriber, subscriber)
+        meal = Meal.create_new_meal(s.diary_id, datetime.now())
+        meal_id = meal.meal_id
+        food = Food(food_id='F010', food_name='Shared Food', kcal=100, kj=100, carbs=20, protein=10, fats=5, sugar=0, fibre=0)
+        db.session.add(food)
+        db.session.commit()
+        MealItem.create_new_meal_item(meal_id, food.food_id, 100)
+
+    response = logged_in_client.get('/grocery_list')
+    assert response.status_code == 200
+    assert b'Shared Food' in response.data
 
 def test_create_meal(app, logged_in_client, subscriber):
     response = logged_in_client.get('/create_meal')

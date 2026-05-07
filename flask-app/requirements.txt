@@ -6,3 +6,5 @@ flask-migrate
 pytest
 Werkzeug
 rapidfuzz
+pandas
+openpyxl

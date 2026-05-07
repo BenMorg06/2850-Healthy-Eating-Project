@@ -798,6 +798,24 @@ label {
     color: var(--muted);
 }
 
+/* GROCERY LIST */
+.meal-header { cursor: pointer; }
+.meal-header .meal-toggle { margin: 0; }
+.meal-food-list {
+    display: none;
+    padding: 10px 16px 16px;
+}
+.meal-food-list[aria-hidden="false"] {
+    display: block;
+}
+.meal-food-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.meal-food-list li { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: #f8fbf6; border-radius: 8px; }
+.meal-food-list label { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
+.food-title { order: 1; flex: 1; text-align: left; }
+.meal-food-checkbox { order: 2; margin-left: 12px; width: 18px; height: 18px; transform: none; }
+.meal-entry { margin-bottom: 12px; padding: 12px; }
+
+
 .pro-chart-row {
     display: grid;
     grid-template-columns: 1.35fr .85fr;

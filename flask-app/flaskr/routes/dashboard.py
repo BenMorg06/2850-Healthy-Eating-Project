@@ -6,12 +6,6 @@ from flaskr.models import Subscriber, Meal, Manages
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
-@dashboard_bp.route("/dashboard")
-@login_required
-def dashboard():
-    return render_template("dashboard.html")
-
-
 @dashboard_bp.route("/api/dashboard/weekly-metrics")
 def weekly_metrics(client_id=None):
     # NHS daily guideline values (general adult guidance).

@@ -6,6 +6,11 @@
 <div class="diary-page">
   <div class="top-bar">
     <h2 class="page-title">Today's Diary</h2>
+    {% if profile_incomplete %}
+      <div class="alert alert-warning">
+        Complete your profile in Settings to receive personalised calorie and macro targets.
+      </div>
+    {% endif %}
     <div class="streak-pill">
       <span class="streak-fire">🔥</span>
       <strong class="streak-num" id="streak-count">0</strong>
@@ -54,14 +59,19 @@
   <p class="section-label">Today's macros</p>
   <div class="macro-card">
     {% set macros = [
-      ('Carbs',   nutrition_data.carbs,   macro_targets.carbs,   '#378ADD'),
-      ('Protein', nutrition_data.protein, macro_targets.protein, '#1D9E75'),
-      ('Fat',     nutrition_data.fat,     macro_targets.fat,     '#D85A30'),
-      ('Sugar',   nutrition_data.sugar,   macro_targets.sugar,   '#E24B4A'),
-      ('Fibre',   nutrition_data.fibre,   macro_targets.fibre,   '#888780'),
+      ('carbs',   nutrition_data['carbs'],   macro_targets['carbs'],   '#378ADD'),
+      ('protein', nutrition_data['protein'], macro_targets['protein'], '#1D9E75'),
+      ('fat',     nutrition_data['fat'],     macro_targets['fat'],     '#D85A30'),
+      ('sugar',   nutrition_data['sugar'],   macro_targets['sugar'],   '#E24B4A'),
+      ('fibre',   nutrition_data['fibre'],   macro_targets['fibre'],   '#888780'),
     ] %}
     {% for name, consumed, target, color in macros %}
-    {% set pct = [((consumed / target) * 100) | round(0) | int, 100] | min %}
+    {% set target = macro_targets[name] %}
+    {% if target > 0 %}
+      {% set pct = [((consumed / target) * 100) | round(0) | int, 100] | min %}
+    {% else %}
+        {% set pct = 0 %}
+    {% endif %}
     <div class="macro-row">
       <span class="macro-name">{{ name }}</span>
       <div class="macro-bar-wrap">

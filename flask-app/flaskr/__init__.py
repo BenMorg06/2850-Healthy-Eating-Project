@@ -137,8 +137,30 @@ def create_app(test_config=None):
         if not subscriber:
             return redirect(url_for('auth.login'))
 
+        # Calculate personalised calorie target
         caloric_need = calculate_caloric_need(subscriber)
-        macro_targets = get_subscriber_macro_needs(caloric_need)
+
+        # Check whether subscriber has completed profile info
+        profile_incomplete = (
+            not subscriber.height or
+            not subscriber.weight or
+            not subscriber.sex or
+            not subscriber.activity_level
+        )
+
+        # Fallback NHS defaults for new users
+        if profile_incomplete or not caloric_need or caloric_need <= 0:
+            caloric_need = 2000
+
+            macro_targets = {
+                'carbs': 275,
+                'protein': 50,
+                'fat': 70,
+                'sugar': 50,
+                'fibre': 25
+            }
+        else:
+            macro_targets = get_subscriber_macro_needs(caloric_need)
 
         # Load todays meals for subscriber to view
         today = date.today()
@@ -179,6 +201,7 @@ def create_app(test_config=None):
             macro_score=macro_score,
             nutrition_data=nutrition_data,
             score_history=score_history,
+            profile_incomplete=profile_incomplete
         )
 
     @app.route('/diary')

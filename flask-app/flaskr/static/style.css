@@ -601,26 +601,20 @@ label {
 }
 
 .tiny-blue {
-    border: none;
     background: var(--blue);
-    color: #fff;
-    border-radius: 6px;
-    padding: 8px 14px;
-    cursor: pointer;
+    color: #ffffff;
 }
 
 .big-btn {
     padding: 10px 16px;
 }
 
+
 .ghost-btn {
-    border: 1px solid var(--green);
-    background: transparent;
+    border: 1px solid var(--green-dark);
     color: var(--green-dark);
-    border-radius: 6px;
-    padding: 10px 14px;
-    cursor: pointer;
 }
+
 
 .small-btn {
     padding: 8px 12px;
@@ -706,15 +700,6 @@ label {
     cursor: pointer;
     color: #c94a59;
     font-weight: 700;
-}
-
-.quick-btn {
-    border: none;
-    background: var(--green);
-    color: #fff;
-    border-radius: 8px;
-    padding: 8px 12px;
-    cursor: pointer;
 }
 
 .professional-layout {
@@ -1135,17 +1120,13 @@ label {
     gap: 14px;
 }
 
-.auth-submit {
-    width: 100%;
-    margin-top: 18px;
-    border: none;
+
+.auth-submit,
+.quick-btn {
     background: var(--green);
-    color: #fff;
-    border-radius: 10px;
-    padding: 12px 14px;
-    cursor: pointer;
-    font-weight: 700;
+    color: #ffffff;
 }
+
 
 .auth-bottom-link {
     margin-top: 14px;

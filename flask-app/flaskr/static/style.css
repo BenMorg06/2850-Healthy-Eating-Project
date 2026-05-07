@@ -30,16 +30,15 @@ select {
     font: inherit;
 }
 
+
 input,
 textarea,
 select {
-    border: 1px solid rgba(79, 125, 67, .12);
-    border-radius: 6px;
-    outline: none;
-    width: 100%;
-    padding: 10px 12px;
-    background: #f8fbf6;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    color: var(--text);
 }
+
 
 textarea {
     resize: vertical;
@@ -60,14 +59,12 @@ a {
     grid-template-columns: 1fr;
 }
 
+
 .sidebar {
     background: var(--green);
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 16px 8px;
+    color: #ffffff;
 }
+
 
 .brand {
     text-align: center;
@@ -277,13 +274,13 @@ a {
     border-radius: 999px;
     white-space: nowrap;
 }
-
+    
 .tag.red {
-    background: #e55239;
+    background: #b42318; 
 }
 
 .tag.green {
-    background: #5a9b56;
+    background: #2b4b2a;
 }
 
 .preview-grid {
@@ -583,12 +580,16 @@ label {
     font-weight: 700;
 }
 
-.helper-text {
-    margin: 10px 0 0;
-    font-size: 12px;
+
+.helper-text,
+.muted-line,
+.empty-hint,
+.meta,
+.stat-card .lbl,
+.stat-card .sub {
     color: var(--muted);
-    line-height: 1.6;
 }
+
 
 .action-row {
     display: flex;
@@ -755,12 +756,6 @@ label {
     margin: 0 0 4px;
 }
 
-.muted-line {
-    margin: 0;
-    color: var(--muted);
-    font-size: 12px;
-}
-
 .pro-summary-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -796,9 +791,15 @@ label {
     display: block;
 }
 .meal-food-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.meal-food-list li { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; background: #f8fbf6; border-radius: 8px; }
+.meal-food-list li {
+    background: #ffffff;
+    border: 1px solid #dddddd;
+}
+
+.food-title {
+    color: var(--text);
+}
 .meal-food-list label { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
-.food-title { order: 1; flex: 1; text-align: left; }
 .meal-food-checkbox { order: 2; margin-left: 12px; width: 18px; height: 18px; transform: none; }
 .meal-entry { margin-bottom: 12px; padding: 12px; }
 
@@ -1236,10 +1237,12 @@ label {
   margin-top: 1rem;
 }
 
+
 .highlight-red {
-  color: red;
-  font-weight: bold;
+    color: #b42318;  
+    font-weight: bold;
 }
+
 
 .metrics-card-header {
   display: flex;
@@ -1298,13 +1301,14 @@ label {
 .streak-num { font-size: 15px; font-weight: 600; color: #633806; }
 .streak-label { font-size: 12px; color: #854F0B; }
 
-.section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #888; margin-bottom: 10px; }
+
+.section-label {
+    color: #4a4a4a;   /* same as your --muted */
+}
 
 .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
 .stat-card { background: #f5f5f5; border-radius: 8px; padding: 14px 16px; }
 .stat-card .val { font-size: 22px; font-weight: 600; line-height: 1.1; }
-.stat-card .lbl { font-size: 12px; color: #666; margin-top: 4px; }
-.stat-card .sub { font-size: 11px; color: #999; margin-top: 2px; }
 
 .chart-card, .macro-card, .feedback-card {
 background: #fff; border: 1px solid #e8e8e8; border-radius: 12px;
@@ -1556,9 +1560,4 @@ padding: 1.25rem; margin-bottom: 1.5rem;
         padding: 3px 8px;
         font-size: 11px;
         color: #425541;
-    }
-    .empty-hint {
-        color: var(--muted);
-        font-size: 13px;
-        margin: 0;
     }

@@ -44,95 +44,6 @@
     </div>
 </div>
 
-<style>
-.compose-form-container {
-    max-width: 800px;
-    margin: 20px auto;
-    background: var(--card-bg);
-    border-radius: 8px;
-    padding: 30px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.compose-form {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
-    color: var(--text);
-}
-
-.form-group select,
-.form-group input[type="text"],
-.form-group textarea {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 14px;
-    background: var(--bg);
-    color: var(--text);
-}
-
-.form-group select:focus,
-.form-group input[type="text"]:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-}
-
-.form-group textarea {
-    resize: vertical;
-    min-height: 150px;
-    font-family: inherit;
-}
-
-.form-actions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    margin-top: 10px;
-}
-
-.cancel-btn {
-    color: var(--muted);
-    text-decoration: none;
-    padding: 12px 20px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    transition: all 0.2s;
-}
-
-.cancel-btn:hover {
-    background: var(--bg);
-    color: var(--text);
-}
-
-@media (max-width: 768px) {
-    .compose-form-container {
-        margin: 20px;
-        padding: 20px;
-    }
-
-    .form-actions {
-        flex-direction: column;
-    }
-
-    .cancel-btn {
-        text-align: center;
-    }
-}
-</style>
-
 {% block scripts %}
 <script>
 function updateRecipientType() {
@@ -147,7 +58,6 @@ function updateRecipientType() {
     }
 }
 
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     updateRecipientType();
 });

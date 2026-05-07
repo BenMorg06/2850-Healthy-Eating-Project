@@ -58,6 +58,7 @@
 
         <div class="main-area">
             <main class="page-wrap">
+                <!-- Claude Sonnet 4.6 was used in conjunction with flask documentation to explain how to display flash messages-->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}

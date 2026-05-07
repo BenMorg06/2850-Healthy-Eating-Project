@@ -30,6 +30,8 @@ def calculate_daily_score(meals, nutrition_data, subscriber):
         'fat': 27.5  # middle of 20-35
     }
 
+    # Claude Sonnet 4.6 Used to experiment with different scoring algorithms
+    # Using test data and manual review
     macro_scores = []
     for macro, mid_pct in macro_targets_pct.items():
         target_cal = (mid_pct / 100) * caloric_need

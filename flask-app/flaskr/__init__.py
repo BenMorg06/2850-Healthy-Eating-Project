@@ -260,11 +260,16 @@ def create_app(test_config=None):
         query_words = set(query.split())
 
         scored = []
-        # Fuzzy search algorithm based on combination of
-        # first word matchhing, overall string similarity,
-        # and number of query words appearing in the food name
-        # We experimented with different approaches
-        # and this combination seemed to provide good results in testing
+        '''
+        # Claude Sonnet 4.6 was Used to experiment with different
+        fuzzy search algorithms and weightings to find the best results
+        using test a test data set and manual review of results
+        Fuzzy search algorithm based on combination of
+        first word matchhing, overall string similarity,
+        and number of query words appearing in the food name
+        We experimented with different approaches
+        and this combination seemed to provide good results in testing
+        '''
         for food in all_foods:
             name_lower = food.food_name.lower()
 
@@ -670,6 +675,8 @@ def create_app(test_config=None):
 
     app.register_blueprint(dashboard_bp)
 
+    # Claude Sonnet 4.6 was used to provide a high-level overview
+    # of how messaging should work based on the database models I had written
     @app.route('/messages')
     def messages():
         if session.get('is_professional'):
@@ -728,6 +735,7 @@ def create_app(test_config=None):
                 conversations[conv_key]['unread_count'] += 1
 
         # Sort conversations by last message time
+        # Claude Sonnet 4.6 used to explain lambda functions
         conversations = dict(sorted(
             conversations.items(),
             key=lambda x: x[1]['last_message'].sent_at,
@@ -939,6 +947,7 @@ def create_app(test_config=None):
             flash('Message sent successfully.', 'success')
 
         # Pre-fill recipient if specified in URL params
+        # Claude Sonnet 4.6 was used to explain concept of pre-filling
         prefill_recipient_professional_id = request.args.get(
             'recipient_professional_id',
             type=int

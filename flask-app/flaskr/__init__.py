@@ -208,7 +208,12 @@ def create_app(test_config=None):
             )
         meals = [m for m in all_meals if len(m.items) > 0]
 
-        return render_template('diary.html', active_page='diary', meals=meals, is_professional=is_professional)
+        return render_template(
+            'diary.html',
+            active_page='diary',
+            meals=meals,
+            is_professional=is_professional
+            )
 
     @app.route('/create_meal', methods=['GET'])
     def create_meal():

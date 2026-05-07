@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from flask import Blueprint, abort, flash, render_template, jsonify, session
 from flask_login import login_required
-from flaskr.models import Subscriber, Meal
+from flaskr.models import Subscriber, Meal, Manages
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -133,7 +133,8 @@ def weekly_metrics(client_id=None):
             "carbs":    week_series("carbs"),
         }
 
-        start_day = today if today in streak_dates else today - timedelta(days=1)
+        start_day =\
+            today if today in streak_dates else today - timedelta(days=1)
         streak = 0
         current_day = start_day
         while current_day in streak_dates:

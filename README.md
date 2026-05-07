@@ -17,6 +17,10 @@ git branch 'your-feature'
 git checkout 'your-feature'
 ```
 
+```console
+pip install -r requirements.txt
+```
+
 Now when in your branch you can import the food data into the database by running
 ```console
 python import_food_data.py

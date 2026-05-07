@@ -124,8 +124,9 @@ def weekly_metrics():
             "carbs":    week_series("carbs"),
         }
 
+        start_day = today if today in streak_dates else today - timedelta(days=1)
         streak = 0
-        current_day = today
+        current_day = start_day
         while current_day in streak_dates:
             streak += 1
             current_day -= timedelta(days=1)

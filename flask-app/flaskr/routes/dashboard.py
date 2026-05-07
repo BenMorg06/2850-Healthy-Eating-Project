@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
-from flask import Blueprint, render_template, jsonify
-from flask_login import login_required, current_user
+from flask import Blueprint, flash, render_template, jsonify, session
+from flask_login import login_required
 from flaskr.models import Subscriber, Meal
 
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -31,15 +31,14 @@ def weekly_metrics():
     week_start = today - timedelta(days=today.weekday())
     week_end = week_start + timedelta(days=6)
 
-    subscriber_id = None
-    if hasattr(current_user, 'id') and current_user.is_authenticated:
-        subscriber_id = (
-            getattr(current_user, 'subscriber_id', None)
-            or current_user.id
-        )
+    if session.get("is_professional"):
+        subscriber_id = None
+    else:
+        subscriber_id = session.get("user_id")
 
     if subscriber_id is None:
-        subscriber_id = 1
+        flash("Subscriber not found.", "error")
+        return None
 
     subscriber = Subscriber.query.get(subscriber_id)
     if not subscriber or not subscriber.diary_id:

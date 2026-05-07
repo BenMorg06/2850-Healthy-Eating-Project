@@ -1548,3 +1548,16 @@ padding: 1.25rem; margin-bottom: 1.5rem;
         margin-right: 0;
     }
 }
+
+    .macro-pill {
+        background: #e7efe3;
+        border-radius: 999px;
+        padding: 3px 8px;
+        font-size: 11px;
+        color: #425541;
+    }
+    .empty-hint {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0;
+    }

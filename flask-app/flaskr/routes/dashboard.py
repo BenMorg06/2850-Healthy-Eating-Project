@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta
-from flask import Blueprint, flash, render_template, jsonify, session
+from flask import Blueprint, abort, flash, render_template, jsonify, session
 from flask_login import login_required
 from flaskr.models import Subscriber, Meal
 
@@ -13,7 +13,7 @@ def dashboard():
 
 
 @dashboard_bp.route("/api/dashboard/weekly-metrics")
-def weekly_metrics():
+def weekly_metrics(client_id=None):
     # NHS daily guideline values (general adult guidance).
     nhs_daily_targets = {
         "calories": 2000,  # kcal
@@ -32,15 +32,24 @@ def weekly_metrics():
     week_end = week_start + timedelta(days=6)
 
     if session.get("is_professional"):
-        subscriber_id = None
+        if client_id is None:
+            abort(400)
+        professional_id = session.get('user_id')
+        relationship = Manages.query.filter_by(
+            professional_id=professional_id,
+            subscriber_id=client_id
+        ).first()
+        if not relationship:
+            abort(403)
+        subscriber = Subscriber.query.get(client_id)
+        if not subscriber:
+            abort(404)
     else:
         subscriber_id = session.get("user_id")
-
-    if subscriber_id is None:
-        flash("Subscriber not found.", "error")
-        return None
-
-    subscriber = Subscriber.query.get(subscriber_id)
+        if subscriber_id is None:
+            flash("Subscriber not found.", "error")
+            return jsonify({"error": "Subscriber not found"}), 404
+        subscriber = Subscriber.query.get(subscriber_id)
     if not subscriber or not subscriber.diary_id:
         series = {k: [0.0] * 7 for k in nhs_daily_targets}
         streak = 0

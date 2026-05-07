@@ -1,7 +1,7 @@
 from flaskr.extensions import db
 from flaskr import create_app
-from flaskr.models import Subscriber, Meal, MealItem, Food, Professional, Manages
-from datetime import date, datetime
+from flaskr.models import Subscriber, Professional
+from datetime import date
 import pytest
 from werkzeug.security import generate_password_hash
 
@@ -39,16 +39,15 @@ def subscriber(app):
         )
         return s.subscriber_id
 
+
 @pytest.fixture
 def logged_in_client(client, subscriber, app):
-    with app.app_context():
-        s = db.session.get(Subscriber, subscriber)
-    
     with client.session_transaction() as session:
-        session['user_id'] = subscriber   
+        session['user_id'] = subscriber
         session['_fresh'] = True
-    
+
     return client
+
 
 @pytest.fixture
 def professional(app):
@@ -62,7 +61,8 @@ def professional(app):
             profession=None
         )
         return p.professional_id
-    
+
+
 @pytest.fixture
 def logged_in_professional(client, professional):
     with client.session_transaction() as sess:
@@ -70,9 +70,10 @@ def logged_in_professional(client, professional):
         sess['is_professional'] = True
     return client
 
+
 class TestAuthRoutes:
     """Tests route access and basic functionality."""
-    
+
     def test_login_get_shows_login_page(self, client):
         response = client.get('/login')
         assert response.status_code == 200
@@ -91,9 +92,10 @@ class TestAuthRoutes:
         assert response.status_code == 302
         assert response.location.endswith('/')
 
+
 class TestLogin:
     """Tests login functionality."""
-    
+
     @pytest.mark.parametrize('user', [
         {'email': 'test@example.com',
          'password': 'testpass123',
@@ -118,9 +120,13 @@ class TestLogin:
 
         with client.session_transaction() as sess:
             assert sess['user_id'] == professional
-            assert sess['is_professional'] == True
+            assert sess['is_professional'] is True
 
-    def test_subscriber_login_does_not_set_professional_flag(self, client, subscriber):
+    def test_subscriber_login_does_not_set_professional_flag(
+            self,
+            client,
+            subscriber
+    ):
         client.post('/login', data={
             'email': 'test@example.com',
             'password': 'testpass123',
@@ -141,7 +147,7 @@ class TestLogin:
         assert b'Invalid email or password' in response.data
 
     def test_valid_login_sets_session_id(self, client, subscriber):
-        response = client.post('/login', data={
+        client.post('/login', data={
             'email': 'test@example.com',
             'password': 'testpass123',
             'form_type': 'login'
@@ -150,7 +156,7 @@ class TestLogin:
         with client.session_transaction() as session:
             assert 'user_id' in session
             assert session['user_id'] is not None
-    
+
     def test_login_with_invalid_email(self, client):
         response = client.post('/login', data={
             'email': 'nonexistent@example.com',
@@ -171,9 +177,10 @@ class TestLogin:
         assert response.status_code == 200
         assert b'Invalid email or password' in response.data
 
+
 class TestRegistration:
     """Tests registration functionality."""
-    
+
     def test_registration_with_valid_data(self, client):
         response = client.post('/register', data={
             'email': 'newuser@example.com',
@@ -240,7 +247,7 @@ class TestRegistration:
 
         assert response.status_code == 200
         assert b'Email already registered' in response.data
-        
+
     def test_registration_with_invalid_dob_format(self, client):
         response = client.post('/register', data={
             'email': 'newuser@example.com',
@@ -287,11 +294,13 @@ class TestRegistration:
 
         assert response.status_code == 200
         with app.app_context():
-            pro = Professional.query.filter_by(email='newuser@example.com').first()
+            pro = Professional.query.filter_by(
+                email='newuser@example.com'
+                ).first()
             assert pro is not None
 
     def test_register_creates_diary_for_user(self, client, app):
-        response = client.post('/register', data={
+        client.post('/register', data={
             'email': 'diarynewuser@example.com',
             'name': 'Diary User',
             'address': '777 Diary St',
@@ -301,15 +310,18 @@ class TestRegistration:
             'date_of_birth': '1994-02-28',
             'form_type': 'register'
         }, follow_redirects=False)
-        
+
         with app.app_context():
-            user = Subscriber.query.filter_by(email='diarynewuser@example.com').first()
+            user = Subscriber.query.filter_by(
+                email='diarynewuser@example.com'
+                ).first()
             assert user is not None
             assert user.diary_id is not None
 
+
 class TestLogout:
     """Tests logout functionality."""
-    
+
     def test_logout_clears_session(self, logged_in_client):
         response = logged_in_client.get('/logout', follow_redirects=False)
         assert response.status_code == 302
@@ -321,23 +333,24 @@ class TestLogout:
     def test_logout_redirects_to_login(self, client, subscriber):
         with client.session_transaction() as sess:
             sess['user_id'] = subscriber
-        
+
         response = client.get('/logout', follow_redirects=False)
-        
+
         assert response.status_code == 302
         assert '/login' in response.location
 
     def test_logout_shows_flash_message(self, client, subscriber):
         with client.session_transaction() as sess:
             sess['user_id'] = subscriber
-        
+
         response = client.get('/logout', follow_redirects=True)
-        
+
         assert b'You have been logged out' in response.data
+
 
 class TestAuthAccessControl:
     """Tests that protected routes require authentication."""
-    
+
     def test_unauthenticated_access_to_diary_requires_login(self, client):
         response = client.get('/diary', follow_redirects=False)
         assert response.status_code == 302
@@ -347,7 +360,7 @@ class TestAuthAccessControl:
         response = client.get('/dashboard', follow_redirects=False)
         assert response.status_code == 302
         assert '/login' in response.location
-    
+
     def test_unauthenticated_access_to_meal_requires_login(self, client):
         response = client.get('/create_meal', follow_redirects=False)
         assert response.status_code == 302
@@ -357,16 +370,25 @@ class TestAuthAccessControl:
         response = logged_in_client.get('/diary', follow_redirects=False)
         assert response.status_code == 200
 
-    def test_authenticated_access_to_dashboard_successful(self, logged_in_client):
+    def test_authenticated_access_to_dashboard_successful(
+            self,
+            logged_in_client
+            ):
         response = logged_in_client.get('/dashboard', follow_redirects=False)
         assert response.status_code == 200
 
     def test_authenticated_access_to_meal_successful(self, logged_in_client):
         response = logged_in_client.get('/create_meal', follow_redirects=False)
         assert response.status_code == 302  # should redirect to edit page
-    
-    def test_unauthenticated_access_to_professional_dashboard_requires_login(self, client):
-        response = client.get('/professional_dashboard', follow_redirects=False)
+
+    def test_unauthenticated_access_to_professional_dashboard_requires_login(
+            self,
+            client
+            ):
+        response = client.get(
+            '/professional_dashboard',
+            follow_redirects=False
+            )
         assert response.status_code == 302
         assert '/login' in response.location
 
@@ -374,11 +396,20 @@ class TestAuthAccessControl:
         with client.session_transaction() as sess:
             sess['user_id'] = 1
             sess['is_professional'] = True
-        response = client.get('/professional_dashboard', follow_redirects=False)
+        response = client.get(
+            '/professional_dashboard',
+            follow_redirects=False
+            )
         assert response.status_code == 200
 
-    def test_non_professional_cannot_access_invite_client(self, logged_in_client):
-        response = logged_in_client.get('/invite_client', follow_redirects=False)
+    def test_non_professional_cannot_access_invite_client(
+            self,
+            logged_in_client
+            ):
+        response = logged_in_client.get(
+            '/invite_client',
+            follow_redirects=False
+            )
         assert response.status_code == 302
 
     def test_professional_dashboard_redirects_from_home(self, client):

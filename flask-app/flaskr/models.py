@@ -1,7 +1,6 @@
 from flaskr.extensions import db
 from datetime import datetime
 
-# TODO: Write tests for database
 
 class FoodDiary(db.Model):
     # Define FoodDiary columns from db diagram
@@ -21,6 +20,7 @@ class FoodDiary(db.Model):
         db.session.commit()
         return new_diary
 
+
 class Subscriber(db.Model):
     # Define Subscriber columns from db diagram
     subscriber_id = db.Column(db.Integer, primary_key=True)
@@ -32,13 +32,21 @@ class Subscriber(db.Model):
     date_of_birth = db.Column(db.Date, nullable=False)
     height = db.Column(db.Float, nullable=True)
     weight = db.Column(db.Float, nullable=True)
+    activity_level = db.Column(db.String(20), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    diary_id = db.Column(db.Integer, db.ForeignKey('food_diary.diary_id'), nullable=True)
+    diary_id = db.Column(
+        db.Integer,
+        db.ForeignKey('food_diary.diary_id'),
+        nullable=True
+        )
 
     # Define Subscriber relationships
     food_diary = db.relationship('FoodDiary', backref='subscriber')
     saved_meals = db.relationship('SavedMeal', backref='subscriber')
-    favourite_recipes = db.relationship('FavouriteRecipe', backref='subscriber')
+    favourite_recipes = db.relationship(
+        'FavouriteRecipe',
+        backref='subscriber'
+        )
     recipe_ratings = db.relationship('RecipeRating', backref='subscriber')
     managed_by = db.relationship('Manages', backref='subscriber')
 
@@ -47,7 +55,17 @@ class Subscriber(db.Model):
         return str(self.subscriber_id)
 
     @classmethod
-    def create_new_subscriber(cls, email, name, address, pswd_hash, sex, date_of_birth, height=None, weight=None):
+    def create_new_subscriber(
+        cls,
+        email,
+        name,
+        address,
+        pswd_hash,
+        sex,
+        date_of_birth,
+        height=None,
+        weight=None
+    ):
         new_subscriber = cls(
             email=email,
             name=name,
@@ -60,7 +78,8 @@ class Subscriber(db.Model):
         )
         db.session.add(new_subscriber)
         db.session.commit()
-        FoodDiary.create_new_diary(new_subscriber)  # Create a food diary for the new subscriber
+        # Create a food diary for the new subscriber
+        FoodDiary.create_new_diary(new_subscriber)
         return new_subscriber
 
     def delete_subscriber(self):
@@ -70,22 +89,30 @@ class Subscriber(db.Model):
     @classmethod
     def get_by_email(cls, email):
         return cls.query.filter_by(email=email).first()
-    
-    def verify_password(self, password):
-        # Implement password verification logic
-        pass
 
 
 class Meal(db.Model):
     # Define Meal columns from db diagram
     meal_id = db.Column(db.Integer, primary_key=True)
-    diary_id = db.Column(db.Integer, db.ForeignKey('food_diary.diary_id'), nullable=False)
+    diary_id = db.Column(
+        db.Integer,
+        db.ForeignKey('food_diary.diary_id'),
+        nullable=False
+        )
     meal_time = db.Column(db.DateTime, nullable=False)
 
     # Define Meal relationships
-    items = db.relationship('MealItem', backref='meals', cascade='all, delete-orphan')
+    items = db.relationship(
+        'MealItem',
+        backref='meals',
+        cascade='all, delete-orphan'
+        )
     comments = db.relationship('Comment', backref='meal')
-    saved_by = db.relationship('SavedMeal', backref='meal')
+    saved_by = db.relationship(
+        'SavedMeal',
+        backref='meal',
+        cascade='all, delete-orphan'
+        )
 
     @classmethod
     def create_new_meal(cls, diary_id, meal_time):
@@ -93,19 +120,20 @@ class Meal(db.Model):
         db.session.add(new_meal)
         db.session.commit()
         return new_meal
-    
+
     @classmethod
     def get_by_id(cls, meal_id):
         return cls.query.filter_by(meal_id=meal_id).all()
-    
+
     @classmethod
     def get_by_diary_id(cls, diary_id):
-        # Used to list all meals within a subscribers diary - for diary view page
+        # Used to list all meals within a subscribers diary
         meals = cls.query.filter_by(diary_id=diary_id).all()
         diary = FoodDiary.query.filter_by(diary_id=diary_id).first()
         if not diary:
-            raise ValueError("FoodDiary with the given diary_id does not exist.")
+            raise ValueError("FoodDiary does not exist.")
         return meals
+
     def update_meal_time(self, new_time):
         self.meal_time = new_time
         db.session.commit()
@@ -114,11 +142,20 @@ class Meal(db.Model):
         db.session.delete(self)
         db.session.commit()
 
+
 class MealItem(db.Model):
     # Define MealItem columns from db diagram
     meal_item_id = db.Column(db.Integer, primary_key=True)
-    meal_id = db.Column(db.Integer, db.ForeignKey('meal.meal_id'), nullable=False)
-    food_id = db.Column(db.String(120), db.ForeignKey('food.food_id'), nullable=False)
+    meal_id = db.Column(
+        db.Integer,
+        db.ForeignKey('meal.meal_id'),
+        nullable=False
+        )
+    food_id = db.Column(
+        db.String(120),
+        db.ForeignKey('food.food_id'),
+        nullable=False
+        )
     weight = db.Column(db.Integer, nullable=False)
 
     @classmethod
@@ -127,12 +164,12 @@ class MealItem(db.Model):
         db.session.add(new_meal_item)
         db.session.commit()
         return new_meal_item
-    
+
     @classmethod
     def get_by_meal(cls, meal_id):
-        # Used to detail all the food items within a single meal, e.g. for a meal summary page
+        # Used to detail all food items within a single meal
         return cls.query.filter_by(meal_id=meal_id).all()
-    
+
     def update_weight(self, new_weight):
         self.weight = new_weight
         db.session.commit()
@@ -140,6 +177,7 @@ class MealItem(db.Model):
     def delete_meal_item(self):
         db.session.delete(self)
         db.session.commit()
+
 
 class Food(db.Model):
     # Define Food columns from db diagram
@@ -163,10 +201,55 @@ class Food(db.Model):
 class SavedMeal(db.Model):
     # Define SavedMeal columns from db diagram
     saved_meal_id = db.Column(db.Integer, primary_key=True)
-    subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
+    subscriber_id = db.Column(
+        db.Integer,
+        db.ForeignKey('subscriber.subscriber_id'),
+        nullable=False
+        )
     meal_name = db.Column(db.String(120), nullable=False)
-    meal_id = db.Column(db.Integer, db.ForeignKey('meal.meal_id'), nullable=False)
+    meal_id = db.Column(
+        db.Integer,
+        db.ForeignKey('meal.meal_id'),
+        nullable=False
+        )
     saved_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    @classmethod
+    def create_new_saved_meal(cls, subscriber_id, meal_id, meal_name):
+        existing = cls.query.filter_by(
+            subscriber_id=subscriber_id,
+            meal_id=meal_id
+            ).first()
+        if existing:
+            return existing
+        new_saved = cls(
+            subscriber_id=subscriber_id,
+            meal_id=meal_id,
+            meal_name=meal_name
+            )
+        db.session.add(new_saved)
+        db.session.commit()
+        return new_saved
+
+    @classmethod
+    def get_by_subscriber(cls, subscriber_id):
+        return cls.query.join(Meal)\
+                .filter(cls.subscriber_id == subscriber_id)\
+                .order_by(cls.saved_at.desc())\
+                .all()
+
+    @classmethod
+    def delete_saved_meal(cls, subscriber_id, meal_id):
+        saved = cls.query.filter_by(
+            subscriber_id=subscriber_id,
+            meal_id=meal_id
+            ).first()
+        if saved:
+            db.session.delete(saved)
+            db.session.commit()
+            return True
+        return False
+
 
 #  Professional
 class Professional(db.Model):
@@ -185,7 +268,14 @@ class Professional(db.Model):
 
     # CRUD methods for Professional
     @classmethod
-    def create_new_professional(cls, email, name, address, pswd_hash, profession=None):
+    def create_new_professional(
+        cls,
+        email,
+        name,
+        address,
+        pswd_hash,
+        profession=None
+    ):
         new_professional = cls(
             email=email,
             name=name,
@@ -209,43 +299,64 @@ class Professional(db.Model):
         # Implement password verification logic
         pass
 
+
 # Manages
 class Manages(db.Model):
     # Define Manages columns from db diagram
     manages_id = db.Column(db.Integer, primary_key=True)
-    professional_id = db.Column(db.Integer, db.ForeignKey('professional.professional_id'), nullable=False)
-    subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
+    professional_id = db.Column(
+        db.Integer,
+        db.ForeignKey('professional.professional_id'),
+        nullable=False
+        )
+    subscriber_id = db.Column(
+        db.Integer,
+        db.ForeignKey('subscriber.subscriber_id'),
+        nullable=False
+        )
     start_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
     end_date = db.Column(db.DateTime, nullable=True)
 
     # CRUD for managing relationships between professionals and subscribers
     @classmethod
     def create_management_relationship(cls, professional_id, subscriber_id):
-        new_relationship = cls(professional_id=professional_id, subscriber_id=subscriber_id)
+        new_relationship = cls(
+            professional_id=professional_id,
+            subscriber_id=subscriber_id
+            )
         db.session.add(new_relationship)
         db.session.commit()
         return new_relationship
-    
+
     @classmethod
-    def get_by_professional(cls, professional_id): 
-        # Used to list all subscribers managed by a professional, e.g. for a professional's dashboard
+    def get_by_professional(cls, professional_id):
+        # Used to list all subscribers managed by a professional
         return cls.query.filter_by(professional_id=professional_id).all()
-    
+
     @classmethod
     def get_by_subscriber(cls, subscriber_id):
-        # Used to find the professional(s) managing a subscriber, e.g. for a subscriber's profile page
+        # Used to find the professional(s) managing a subscriber
         return cls.query.filter_by(subscriber_id=subscriber_id).all()
-    
+
     def end_management(self):
         self.end_date = datetime.now()
         db.session.commit()
+
 
 # Comment
 class Comment(db.Model):
     # Define Comment columns from db diagram
     comment_id = db.Column(db.Integer, primary_key=True)
-    meal_id = db.Column(db.Integer, db.ForeignKey('meal.meal_id'), nullable=False)
-    professional_id = db.Column(db.Integer, db.ForeignKey('professional.professional_id'), nullable=False)
+    meal_id = db.Column(
+        db.Integer,
+        db.ForeignKey('meal.meal_id'),
+        nullable=False
+        )
+    professional_id = db.Column(
+        db.Integer,
+        db.ForeignKey('professional.professional_id'),
+        nullable=False
+        )
     title = db.Column(db.String(120), nullable=False)
     body = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
@@ -262,12 +373,12 @@ class Comment(db.Model):
         db.session.add(new_comment)
         db.session.commit()
         return new_comment
-    
+
     @classmethod
     def get_by_meal(cls, meal_id):
         # Used to list all comments on a meal, e.g. for a meal summary page
         return cls.query.filter_by(meal_id=meal_id).all()
-    
+
     def update_comment(self, new_title, new_body):
         self.title = new_title
         self.body = new_body
@@ -276,6 +387,7 @@ class Comment(db.Model):
     def delete_comment(self):
         db.session.delete(self)
         db.session.commit()
+
 
 # Recipe
 class Recipe(db.Model):
@@ -286,34 +398,210 @@ class Recipe(db.Model):
     num_of_servings = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     # Photo field can be added later
-    
+
     # Define Recipe relationships
     items = db.relationship('RecipeItem', backref='recipe')
     ratings = db.relationship('RecipeRating', backref='recipe')
     favourited_by = db.relationship('FavouriteRecipe', backref='recipe')
 
+
 # RecipeItem
 class RecipeItem(db.Model):
     # Define RecipeItem columns from db diagram
     recipe_item_id = db.Column(db.Integer, primary_key=True)
-    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.recipe_id'), nullable=False)
-    food_id = db.Column(db.String(120), db.ForeignKey('food.food_id'), nullable=False)
+    recipe_id = db.Column(
+        db.Integer,
+        db.ForeignKey('recipe.recipe_id'),
+        nullable=False
+        )
+    food_id = db.Column(
+        db.String(120),
+        db.ForeignKey('food.food_id'),
+        nullable=False
+        )
     weight = db.Column(db.Integer, nullable=False)
+
 
 # FavouriteRecipe
 class FavouriteRecipe(db.Model):
     # Define FavouriteRecipe columns from db diagram
     favourite_recipe_id = db.Column(db.Integer, primary_key=True)
-    subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
-    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.recipe_id'), nullable=False)
+    subscriber_id = db.Column(
+        db.Integer,
+        db.ForeignKey('subscriber.subscriber_id'),
+        nullable=False
+        )
+    recipe_id = db.Column(
+        db.Integer,
+        db.ForeignKey('recipe.recipe_id'),
+        nullable=False
+        )
     saved_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
 
 # Recipe Rating
 class RecipeRating(db.Model):
     # Define RecipeRating columns from db diagram
     recipe_rating_id = db.Column(db.Integer, primary_key=True)
-    subscriber_id = db.Column(db.Integer, db.ForeignKey('subscriber.subscriber_id'), nullable=False)
-    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.recipe_id'), nullable=False)
+    subscriber_id = db.Column(
+        db.Integer,
+        db.ForeignKey('subscriber.subscriber_id'),
+        nullable=False
+        )
+    recipe_id = db.Column(
+        db.Integer,
+        db.ForeignKey('recipe.recipe_id'),
+        nullable=False
+        )
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=True)
     rated_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+
+# Nutrition Score
+class NutritionScore(db.Model):
+    # Define NutritionScore columns from db diagram
+    nutrition_score_id = db.Column(db.Integer, primary_key=True)
+    subscriber_id = db.Column(
+        db.Integer,
+        db.ForeignKey('subscriber.subscriber_id'),
+        nullable=False
+        )
+    date = db.Column(db.Date, nullable=False)
+    score = db.Column(db.Float, nullable=False)
+    calorie_score = db.Column(db.Float, nullable=False)
+    macro_score = db.Column(db.Float, nullable=False)
+    calculated_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.now
+        )
+
+    @classmethod
+    def create_new_score(
+        cls,
+        subscriber_id,
+        date,
+        score,
+        calorie_score,
+        macro_score
+    ):
+        new_score = cls(
+            subscriber_id=subscriber_id,
+            date=date,
+            score=score,
+            calorie_score=calorie_score,
+            macro_score=macro_score
+        )
+        db.session.add(new_score)
+        db.session.commit()
+        return new_score
+
+
+# Message
+class Message(db.Model):
+    # Define Message columns
+    message_id = db.Column(db.Integer, primary_key=True)
+    sender_professional_id = db.Column(
+        db.Integer,
+        db.ForeignKey('professional.professional_id'),
+        nullable=True)
+    sender_subscriber_id = db.Column(
+        db.Integer,
+        db.ForeignKey('subscriber.subscriber_id'),
+        nullable=True
+    )
+    recipient_professional_id = db.Column(
+        db.Integer,
+        db.ForeignKey('professional.professional_id'),
+        nullable=True
+    )
+    recipient_subscriber_id = db.Column(
+        db.Integer,
+        db.ForeignKey('subscriber.subscriber_id'),
+        nullable=True
+    )
+    subject = db.Column(db.String(200), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    sent_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    is_read = db.Column(db.Boolean, nullable=False, default=False)
+
+    # Define Message relationships
+    sender_professional = db.relationship(
+        'Professional',
+        foreign_keys=[sender_professional_id],
+        backref='sent_messages'
+        )
+    sender_subscriber = db.relationship(
+        'Subscriber',
+        foreign_keys=[sender_subscriber_id],
+        backref='sent_messages'
+        )
+    recipient_professional = db.relationship(
+        'Professional',
+        foreign_keys=[recipient_professional_id],
+        backref='received_messages'
+        )
+    recipient_subscriber = db.relationship(
+        'Subscriber',
+        foreign_keys=[recipient_subscriber_id],
+        backref='received_messages'
+        )
+
+    @classmethod
+    def create_new_message(
+        cls,
+        sender_professional_id,
+        sender_subscriber_id,
+        recipient_professional_id,
+        recipient_subscriber_id,
+        subject,
+        body
+            ):
+        new_message = cls(
+            sender_professional_id=sender_professional_id,
+            sender_subscriber_id=sender_subscriber_id,
+            recipient_professional_id=recipient_professional_id,
+            recipient_subscriber_id=recipient_subscriber_id,
+            subject=subject,
+            body=body
+        )
+        db.session.add(new_message)
+        db.session.commit()
+        return new_message
+
+    @classmethod
+    def get_conversation(
+        cls,
+        user1_professional_id,
+        user1_subscriber_id,
+        user2_professional_id,
+        user2_subscriber_id
+            ):
+        # Get messages between two users
+        return cls.query.filter(
+            (
+                ((cls.sender_professional_id == user1_professional_id)
+                 & (cls.sender_subscriber_id == user1_subscriber_id) &
+                 (cls.recipient_professional_id == user2_professional_id)
+                 & (cls.recipient_subscriber_id == user2_subscriber_id)) |
+                ((cls.sender_professional_id == user2_professional_id) &
+                 (cls.sender_subscriber_id == user2_subscriber_id) &
+                 (cls.recipient_professional_id == user1_professional_id) &
+                 (cls.recipient_subscriber_id == user1_subscriber_id))
+            )
+        ).order_by(cls.sent_at).all()
+
+    @classmethod
+    def get_user_messages(cls, professional_id, subscriber_id):
+        # Get all messages for a user
+        return cls.query.filter(
+            ((cls.sender_professional_id == professional_id)
+             & (cls.sender_subscriber_id == subscriber_id)) |
+            ((cls.recipient_professional_id == professional_id)
+             & (cls.recipient_subscriber_id == subscriber_id))
+        ).order_by(cls.sent_at.desc()).all()
+
+    def mark_as_read(self):
+        self.is_read = True
+        db.session.commit()

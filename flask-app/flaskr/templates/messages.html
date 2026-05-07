@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Messages – Healthy Dietary System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-heading">
+        <h1>Messages</h1>
+        {% if session.get('is_professional') %}
+        <a href="{{ url_for('compose_message') }}" class="tiny-blue big-btn">✉️ Compose Message</a>
+        {% endif %}
+    </div>
+
+    <div class="messages-container">
+        <div class="conversations-sidebar">
+            <h3>Conversations</h3>
+            {% if conversations %}
+                {% for conv_key, conv in conversations.items() %}
+                <div class="conversation-item {% if conv.unread_count > 0 %}unread{% endif %}">
+                    <a href="{{ url_for('view_conversation', other_professional_id=conv.other_professional_id or 0, other_subscriber_id=conv.other_subscriber_id or 0) }}">
+                        <div class="conversation-header">
+                            <strong>{{ conv.other_name }}</strong>
+                            {% if conv.unread_count > 0 %}
+                            <span class="unread-badge">{{ conv.unread_count }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="conversation-preview">
+                            <small>{{ conv.last_message.subject }}</small>
+                        </div>
+                        <div class="conversation-time">
+                            <small>{{ conv.last_message.sent_at.strftime('%d %b %H:%M') }}</small>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-conversations">
+                    <p>No conversations yet.</p>
+                    {% if session.get('is_professional') %}
+                    <p>Start by messaging one of your clients!</p>
+                    {% else %}
+                    <p>Your professional will message you here.</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="messages-main">
+            <div class="welcome-message">
+                <h3>Welcome to Messages</h3>
+                <p>Select a conversation from the sidebar to view messages.</p>
+                {% if session.get('is_professional') %}
+                <p>As a professional, you can message your clients about their nutrition progress, provide advice, and maintain communication.</p>
+                {% else %}
+                <p>Here you can communicate with your nutrition professional for personalized advice and support.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.messages-container {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.conversations-sidebar {
+    flex: 0 0 300px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.conversations-sidebar h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--text);
+}
+
+.conversation-item {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+}
+
+.conversation-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.conversation-item a {
+    display: block;
+    padding: 12px;
+    text-decoration: none;
+    color: var(--text);
+}
+
+.conversation-item.unread {
+    border-left: 4px solid var(--primary);
+    background: rgba(74, 144, 226, 0.05);
+}
+
+.conversation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.unread-badge {
+    background: var(--primary);
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.conversation-preview {
+    color: var(--muted);
+    margin-bottom: 2px;
+}
+
+.conversation-time {
+    color: var(--muted);
+    text-align: right;
+}
+
+.messages-main {
+    flex: 1;
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 40px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.welcome-message h3 {
+    color: var(--text);
+    margin-bottom: 10px;
+}
+
+.welcome-message p {
+    color: var(--muted);
+    margin-bottom: 10px;
+}
+
+.no-conversations {
+    text-align: center;
+    color: var(--muted);
+    padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .messages-container {
+        flex-direction: column;
+    }
+
+    .conversations-sidebar {
+        flex: none;
+    }
+}
+</style>
+{% endblock %}

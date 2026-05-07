@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Conversation with {{ other_name }} – Healthy Dietary System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-heading">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div>
+                <h1>Conversation with {{ other_name }}</h1>
+                <a href="{{ url_for('messages') }}" style="color: var(--muted); text-decoration: none;">← Back to Messages</a>
+            </div>
+            <a href="{{ url_for('compose_message', recipient_professional_id=other_professional_id, recipient_subscriber_id=other_subscriber_id) }}" class="tiny-blue big-btn">✉️ Reply</a>
+        </div>
+    </div>
+
+    <div class="messages-container">
+        <div class="conversations-sidebar">
+            <h3>Conversations</h3>
+            <a href="{{ url_for('messages') }}" class="back-link">← All Conversations</a>
+
+            <!-- This would be populated with other conversations in a real implementation -->
+            <div class="current-conversation">
+                <strong>{{ other_name }}</strong>
+                <small>Active conversation</small>
+            </div>
+        </div>
+
+        <div class="messages-main">
+            <div class="message-thread">
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="message {% if (message.sender_professional_id == session.get('user_id') and session.get('is_professional')) or (message.sender_subscriber_id == session.get('user_id') and not session.get('is_professional')) %}sent{% else %}received{% endif %}">
+                        <div class="message-header">
+                            <strong>
+                                {% if message.sender_professional_id %}
+                                    {% if message.sender_professional_id == session.get('user_id') and session.get('is_professional') %}
+                                        You
+                                    {% else %}
+                                        Professional
+                                    {% endif %}
+                                {% else %}
+                                    {% if message.sender_subscriber_id == session.get('user_id') and not session.get('is_professional') %}
+                                        You
+                                    {% else %}
+                                        Client
+                                    {% endif %}
+                                {% endif %}
+                            </strong>
+                            <small>{{ message.sent_at.strftime('%d %b %Y at %H:%M') }}</small>
+                        </div>
+                        <div class="message-subject">
+                            <strong>{{ message.subject }}</strong>
+                        </div>
+                        <div class="message-body">{{ message.body }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-messages">
+                        <p>No messages in this conversation yet.</p>
+                        <a href="{{ url_for('compose_message', recipient_professional_id=other_professional_id, recipient_subscriber_id=other_subscriber_id) }}" class="tiny-blue big-btn">Start the conversation</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,9 @@
 flask
 flask-sqlalchemy
 pytest
+Flask-Login==0.6.3
+flask-migrate
+pytest
 Werkzeug
 rapidfuzz
 pandas

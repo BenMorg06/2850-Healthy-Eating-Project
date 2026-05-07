@@ -48,13 +48,18 @@
                         <a href="{{ url_for('view_meal', meal_id=meal.meal_id) }}" style="text-decoration:none; color:inherit;">
                             <h4>{{ meal.meal_time.strftime('%d %b %Y – %H:%M') }} →</h4>
                         </a>
+                        {% if not is_professional %}
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <span class="tag red">{{ meal.items | length }} item(s)</span>
                             <a href="{{ url_for('edit_meal', meal_id=meal.meal_id) }}" class="ghost-btn small-btn">Edit</a>
+                            <form method="post" action="{{ url_for('favourite_meal', meal_id=meal.meal_id) }}" style="display: inline;">
+                                <button type="submit" class="ghost-btn small-btn">❤ Favourite</button>
+                            </form>
                             <form method="post" action="{{ url_for('delete_meal', meal_id=meal.meal_id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this meal?')">
                                 <button type="submit" class="ghost-btn small-btn red">Delete</button>
                             </form>
                         </div>
+                        {% endif %}
                     </div>
  
                     {% if meal.items %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Compose Message – Healthy Dietary System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-heading">
+        <h1>Compose Message</h1>
+        <a href="{{ url_for('messages') }}" style="color: var(--muted); text-decoration: none;">← Back to Messages</a>
+    </div>
+
+    <div class="compose-form-container">
+        <form method="POST" class="compose-form">
+            <div class="form-group">
+                <label for="recipient">To:</label>
+                <select name="recipient_id" id="recipient" required onchange="updateRecipientType()">
+                    <option value="">Select a recipient...</option>
+                    {% for recipient in recipients %}
+                    <option value="{{ recipient.id }}" data-type="{{ recipient.type }}" {% if prefill_recipient and ((prefill_recipient.professional_id if recipient.type == 'professional' else prefill_recipient.subscriber_id) == recipient.id) %}selected{% endif %}>
+                        {{ recipient.name }} ({{ recipient.email }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="recipient_type" id="recipient_type" value="">
+            </div>
+
+            <div class="form-group">
+                <label for="subject">Subject:</label>
+                <input type="text" name="subject" id="subject" required maxlength="200"
+                       placeholder="Enter message subject...">
+            </div>
+
+            <div class="form-group">
+                <label for="body">Message:</label>
+                <textarea name="body" id="body" required rows="10"
+                          placeholder="Write your message here..."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="tiny-blue big-btn">Send Message</button>
+                <a href="{{ url_for('messages') }}" class="cancel-btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+function updateRecipientType() {
+    const select = document.getElementById('recipient');
+    const hiddenInput = document.getElementById('recipient_type');
+    const selectedOption = select.options[select.selectedIndex];
+
+    if (selectedOption && selectedOption.value) {
+        hiddenInput.value = selectedOption.getAttribute('data-type');
+    } else {
+        hiddenInput.value = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    updateRecipientType();
+});
+</script>
+{% endblock %}
+{% endblock %}

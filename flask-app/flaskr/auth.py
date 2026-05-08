@@ -74,24 +74,24 @@ def register():
     confirm_password = request.form.get('confirm_password')
     name = request.form.get('name')
     address = request.form.get('address')
-    sex = request.form.get('sex')
+    gender = request.form.get('gender')
     dob_str = request.form.get('date_of_birth')
     is_professional = request.form.get('is_professional') == 'true'
 
     # email is correct format
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         flash('Invalid email format', 'error')
-        return redirect(url_for('auth.auth_page', tab='register'))
+        return redirect(url_for('auth.login', tab='register'))
 
     # validate all fields are present
     if not email or not password\
             or not confirm_password\
             or not address\
-            or not sex\
+            or not gender\
             or not dob_str\
             or not name:
-        flash('Allregistration fields are required.', 'error')
-        return redirect(url_for('auth.auth_page', tab='register'))
+        flash('All registration fields are required.', 'error')
+        return redirect(url_for('auth.login', tab='register'))
 
     # validates passwords match
     if password != confirm_password:
@@ -102,14 +102,14 @@ def register():
     existing = Subscriber.query.filter_by(email=email).first()
     if existing:
         flash('Email already registered', 'error')
-        return redirect(url_for('auth.auth_page', tab='register'))
+        return redirect(url_for('auth.login', tab='register'))
 
     # checks date of birth is valid format and converts to date object
     try:
         date_of_birth = datetime.strptime(dob_str, '%Y-%m-%d').date()
     except ValueError:
         flash('Date of birth must be in YYYY-MM-DD format.', 'error')
-        return redirect(url_for('auth.auth_page', tab='register'))
+        return redirect(url_for('auth.login', tab='register'))
 
     # hashes password for storage
     password_hash = generate_password_hash(password)
@@ -135,7 +135,7 @@ def register():
             name=name,
             address=address,
             pswd_hash=password_hash,
-            sex=sex,
+            sex=gender,
             date_of_birth=date_of_birth,
             height=None,
             weight=None

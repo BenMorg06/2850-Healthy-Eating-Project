@@ -27,10 +27,10 @@
         </div>
 
         <div class="messages-main">
-            <div class="message-thread">
+            <div class="message-thread" tabindex="0" role="region" aria-label="Conversation">
                 {% if messages %}
                     {% for message in messages %}
-                    <div class="message {% if (message.sender_professional_id == session.get('user_id') and session.get('is_professional')) or (message.sender_subscriber_id == session.get('user_id') and not session.get('is_professional')) %}sent{% else %}received{% endif %}">
+                    <div tabindex="0" role="article" aria-label="Message" class="message {% if (message.sender_professional_id == session.get('user_id') and session.get('is_professional')) or (message.sender_subscriber_id == session.get('user_id') and not session.get('is_professional')) %}sent{% else %}received{% endif %}">
                         <div class="message-header">
                             <strong>
                                 {% if message.sender_professional_id %}

@@ -19,15 +19,15 @@
                 </div>
                 <div>
                     <label>Date</label>
-                    <input id="diaryDateFilter" type="date" />
+                    <input id="diaryDateFilter" aria-label="Date Filter" type="date" />
                 </div>
                 <div>
                     <label>From</label>
-                    <input id="dateFrom" type="date" />
+                    <input id="dateFrom" aria-label="Date From" type="date" />
                 </div>
                 <div>
                     <label>To</label>
-                    <input id="dateTo" type="date" />
+                    <input id="dateTo" aria-label="Date To" type="date" />
                 </div>
                 <button id="clearFilters" class="ghost-btn small-btn" type="button">Clear</button>
             </div>
@@ -129,11 +129,25 @@
         let currentPage   = 1;
         let filteredMeals = [...allMeals];
 
+        const savedFilters = localStorage.getItem('diaryFilters');
+        if (savedFilters) {
+            const filters = JSON.parse(savedFilters);
+            foodSearch.value = filters.foodQuery || '';
+            dateFilter.value = filters.exactDate || '';
+            dateFrom.value   = filters.fromDate || '';
+            dateTo.value     = filters.toDate || '';
+            currentPage = filters.page || 1;
+        }
+
         function applyFilters() {
             const foodQuery = foodSearch.value.trim().toLowerCase();
             const exactDate = dateFilter.value;
             const fromDate  = dateFrom.value;
             const toDate    = dateTo.value;
+
+            localStorage.setItem('diaryFilters', JSON.stringify({
+                foodQuery, exactDate, fromDate, toDate, currentPage
+            }));
 
             filteredMeals = allMeals.filter(meal => {
                 const mealDate  = meal.dataset.date;
@@ -189,6 +203,8 @@
             dateFilter.value = '';
             dateFrom.value   = '';
             dateTo.value     = '';
+
+            localStorage.removeItem('diaryFilters');
             applyFilters();
         });
 
@@ -201,7 +217,7 @@
             if (currentPage < totalPages) { currentPage++; render(); }
         });
 
-        render();
+        applyFilters();
     });
 </script>
 {% endblock %}

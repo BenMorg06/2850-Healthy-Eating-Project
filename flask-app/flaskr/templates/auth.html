@@ -46,18 +46,19 @@
                             <input type="text" name="address" placeholder="Enter address" required />
                         </div>
                         <div>
-                            <label>Gender</label>
-                            <select name="sex" required>
-                                <option value="">Select gender</option>
-                                <option>Male</option>
-                                <option>Female</option>
-                                <option>Other</option>
-                                <option>Prefer not to say</option>
-                            </select>
-                        </div>
+                            <div>
+                                <label for="gender">Gender</label>
+                                <select id="gender" name="gender" required>
+                                    <option value="">Select gender</option>
+                                    <option>Male</option>
+                                    <option>Female</option>
+                                    <option>Other</option>
+                                    <option>Prefer not to say</option>
+                                </select>
+                            </div>
                         <div>
                             <label>Date of Birth</label>
-                            <input type="date" name="date_of_birth" required />
+                            <input type="date" name="date_of_birth" aria-label="Date of Birth" required/>
                         </div>
                         <div>
                             <label>Password</label>
@@ -69,7 +70,7 @@
                         </div>
                         <div>
                             <label>Apply As Professional</label>
-                            <input type="checkbox" name="is_professional" value="true" />
+                            <input type="checkbox" id="is_professional" aria-label="Apply As Professional" name="is_professional" value="true" />
                         </div>
                     </div>
                     <button type="submit" class="auth-submit">Create Account</button>

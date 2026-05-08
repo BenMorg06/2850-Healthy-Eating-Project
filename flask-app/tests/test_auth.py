@@ -188,7 +188,7 @@ class TestRegistration:
             'address': '456 Ave',
             'password': 'newpass456',
             'confirm_password': 'newpass456',
-            'sex': 'Female',
+            'gender': 'Female',
             'date_of_birth': '2000-01-01',
             'height': 165.0,
             'weight': 60.0
@@ -203,7 +203,7 @@ class TestRegistration:
             'address': '',
             'password': '',
             'confirm_password': '',
-            'sex': '',
+            'gender': '',
             'date_of_birth': '',
             'height': '',
             'weight': ''
@@ -219,7 +219,7 @@ class TestRegistration:
             'address': '456 Ave',
             'password': 'newpass456',
             'confirm_password': 'wrongpass456',
-            'sex': 'Female',
+            'gender': 'Female',
             'date_of_birth': '2000-01-01',
             'height': 165.0,
             'weight': 60.0
@@ -235,7 +235,7 @@ class TestRegistration:
             'address': '123 St',
             'password': 'testpass123',
             'confirm_password': 'testpass123',
-            'sex': 'Male',
+            'gender': 'Male',
             'date_of_birth': '2000-01-01',
             'height': 175.0,
             'weight': 70.0
@@ -255,7 +255,7 @@ class TestRegistration:
             'address': '456 Ave',
             'password': 'newpass456',
             'confirm_password': 'newpass456',
-            'sex': 'Female',
+            'gender': 'Female',
             'date_of_birth': 'invalid-date',
             'height': 165.0,
             'weight': 60.0
@@ -271,7 +271,7 @@ class TestRegistration:
             'address': '456 Ave',
             'password': 'newpass456',
             'confirm_password': 'newpass456',
-            'sex': 'Male',
+            'gender': 'Male',
             'date_of_birth': '2000-01-01',
             'height': 165.0,
             'weight': 60.0
@@ -287,7 +287,7 @@ class TestRegistration:
             'address': '456 Ave',
             'password': 'newpass456',
             'confirm_password': 'newpass456',
-            'sex': 'Male',
+            'gender': 'Male',
             'date_of_birth': '2000-01-01',
             'is_professional': 'true'
         }, follow_redirects=True)
@@ -306,7 +306,7 @@ class TestRegistration:
             'address': '777 Diary St',
             'password': 'SecurePass123',
             'confirm_password': 'SecurePass123',
-            'sex': 'Other',
+            'gender': 'Other',
             'date_of_birth': '1994-02-28',
             'form_type': 'register'
         }, follow_redirects=False)

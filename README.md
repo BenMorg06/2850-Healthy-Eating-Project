@@ -30,7 +30,12 @@ And then check if the food data has been imported by running
 python check_food_db.py
 ```
 
-To run the webpage server
+## To run tests
+```
+pytest
+```
+
+## To run the webpage server
 ```console
 python run.py
 ```

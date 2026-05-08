@@ -16,7 +16,6 @@
                 <div style="padding: 16px;">
                     <h4>{{ client.name }}</h4>
                     <p style="margin: 4px 0; color: var(--muted);">{{ client.email }}</p>
-                    <p style="margin: 4px 0; color: var(--muted);">{{ client.address }}</p>
                     
                     <div class="card-action-row" style="margin-top: 12px;">
                         <a href="{{ url_for('view_client', client_id=client.subscriber_id) }}" class="tiny-blue small-btn">View Client</a>

@@ -7,12 +7,11 @@ dashboard_bp = Blueprint("dashboard", __name__)
 
 @dashboard_bp.route("/api/dashboard/weekly-metrics")
 def weekly_metrics(client_id=None):
-    # NHS daily guideline values (general adult guidance).
     nhs_daily_targets = {
-        "calories": 2000,  # kcal
-        "fat": 70,         # g
-        "carbs": 260,      # g
-        "protein": 50      # g
+        "calories": 2000,
+        "fat": 70,
+        "carbs": 260,
+        "protein": 50
     }
 
     labels = [

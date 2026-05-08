@@ -54,14 +54,18 @@
   <p class="section-label">Today's macros</p>
   <div class="macro-card">
     {% set macros = [
-      ('Carbs',   nutrition_data.carbs,   macro_targets.carbs,   '#378ADD'),
-      ('Protein', nutrition_data.protein, macro_targets.protein, '#1D9E75'),
-      ('Fat',     nutrition_data.fat,     macro_targets.fat,     '#D85A30'),
-      ('Sugar',   nutrition_data.sugar,   macro_targets.sugar,   '#E24B4A'),
-      ('Fibre',   nutrition_data.fibre,   macro_targets.fibre,   '#888780'),
+      ('carbs',   nutrition_data['carbs'],   macro_targets['carbs'],   '#378ADD'),
+      ('protein', nutrition_data['protein'], macro_targets['protein'], '#1D9E75'),
+      ('fat',     nutrition_data['fat'],     macro_targets['fat'],     '#D85A30'),
+      ('sugar',   nutrition_data['sugar'],   macro_targets['sugar'],   '#E24B4A'),
+      ('fibre',   nutrition_data['fibre'],   macro_targets['fibre'],   '#888780'),
     ] %}
     {% for name, consumed, target, color in macros %}
-    {% set pct = [((consumed / target) * 100) | round(0) | int, 100] | min %}
+    {% if target > 0 %}
+      {% set pct = [((consumed / target) * 100) | round(0) | int, 100] | min %}
+    {% else %}
+        {% set pct = 0 %}
+    {% endif %}
     <div class="macro-row">
       <span class="macro-name">{{ name }}</span>
       <div class="macro-bar-wrap">

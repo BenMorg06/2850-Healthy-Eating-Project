@@ -74,7 +74,7 @@ def register():
     confirm_password = request.form.get('confirm_password')
     name = request.form.get('name')
     address = request.form.get('address')
-    sex = request.form.get('sex')
+    gender = request.form.get('gender')
     dob_str = request.form.get('date_of_birth')
     is_professional = request.form.get('is_professional') == 'true'
 
@@ -87,10 +87,10 @@ def register():
     if not email or not password\
             or not confirm_password\
             or not address\
-            or not sex\
+            or not gender\
             or not dob_str\
             or not name:
-        flash('Allregistration fields are required.', 'error')
+        flash('All registration fields are required.', 'error')
         return redirect(url_for('auth.auth_page', tab='register'))
 
     # validates passwords match
@@ -135,7 +135,7 @@ def register():
             name=name,
             address=address,
             pswd_hash=password_hash,
-            sex=sex,
+            sex=gender,
             date_of_birth=date_of_birth,
             height=None,
             weight=None

@@ -1,15 +1,8 @@
 from datetime import date, datetime, timedelta
-from flask import Blueprint, abort, flash, render_template, jsonify, session
-from flask_login import login_required
+from flask import Blueprint, abort, flash, jsonify, session
 from flaskr.models import Subscriber, Meal, Manages
 
 dashboard_bp = Blueprint("dashboard", __name__)
-
-
-@dashboard_bp.route("/dashboard")
-@login_required
-def dashboard():
-    return render_template("dashboard.html")
 
 
 @dashboard_bp.route("/api/dashboard/weekly-metrics")

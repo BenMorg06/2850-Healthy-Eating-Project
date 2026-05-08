@@ -48,10 +48,8 @@ function renderStreak(streak = 0) {
   streakCount.textContent = streak;
 }
 
-// Microsoft Copilot was used to guide me on what functions I should use
-// Explaining what they do and 
-// What steps were required to implement the graph with live data
-// I then used this understanding to implement the functions for the chart
+// Microsoft Copilot was used to explain concepts and functions
+// required to implement the chart as I was not very confident with JS
 function renderChart() {
   const canvas = document.getElementById("weeklyMetricsChart");
   if (!canvas || typeof Chart === "undefined") return;

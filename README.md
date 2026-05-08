@@ -31,7 +31,7 @@ python check_food_db.py
 ```
 
 ## To run tests
-```
+```console
 pytest
 ```
 

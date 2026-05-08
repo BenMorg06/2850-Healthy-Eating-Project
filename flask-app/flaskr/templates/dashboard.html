@@ -6,6 +6,11 @@
 <div class="diary-page">
   <div class="top-bar">
     <h2 class="page-title">Today's Diary</h2>
+    {% if profile_incomplete %}
+      <div class="alert alert-warning">
+        Complete your profile in Settings to receive personalised calorie and macro targets.
+      </div>
+    {% endif %}
     <div class="streak-pill">
       <span class="streak-fire">🔥</span>
       <strong class="streak-num" id="streak-count">0</strong>
@@ -61,6 +66,7 @@
       ('fibre',   nutrition_data['fibre'],   macro_targets['fibre'],   '#888780'),
     ] %}
     {% for name, consumed, target, color in macros %}
+    {% set target = macro_targets[name] %}
     {% if target > 0 %}
       {% set pct = [((consumed / target) * 100) | round(0) | int, 100] | min %}
     {% else %}
